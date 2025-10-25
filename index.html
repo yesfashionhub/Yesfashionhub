@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Your WhatsApp Store</title>
+  <style>
+    /* Basic reset */
+    * { box-sizing: border-box; margin:0; padding:0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+    body { background: #f6f7fb; color:#111827; line-height:1.4; padding-bottom: 60px; }
+
+    /* Container */
+    .container { max-width:1100px; margin:20px auto; padding:16px; }
+
+    /* Header */
+    header { display:flex; align-items:center; justify-content:space-between; gap:12px; background:#fff; padding:10px 16px; border-radius:12px; box-shadow:0 6px 18px rgba(13,38,76,0.06); }
+    .brand { display:flex; align-items:center; gap:12px; }
+    .brand img { width:48px; height:48px; object-fit:cover; border-radius:8px; }
+    .brand h1 { font-size:1.1rem; margin-bottom:2px; }
+    .cart-btn { position:relative; background:#0ea5a4; color:white; padding:8px 12px; border-radius:10px; cursor:pointer; border:none; display:flex; gap:8px; align-items:center; }
+    .cart-count { position:absolute; top:-6px; right:-6px; background:#ef4444; width:20px; height:20px; border-radius:50%; color:white; display:flex; align-items:center; justify-content:center; font-size:0.75rem; }
+
+    /* Hero */
+    .hero { margin-top:16px; overflow:hidden; border-radius:12px; background:#ddd; }
+    .hero img { width:100%; height:220px; object-fit:cover; display:block; }
+
+    /* Search & filters */
+    .filters { display:flex; gap:12px; margin-top:14px; }
+    .search { flex:1; display:flex; gap:8px; }
+    .search input, .select { padding:10px 12px; border-radius:10px; border:1px solid #e6e6e9; background:#fff; width:100%; }
+    .select { max-width:220px; }
+
+    /* Products grid */
+    .products { margin-top:18px; display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:14px; }
+
+    .card { background:#fff; border-radius:12px; padding:12px; box-shadow:0 8px 18px rgba(15,23,42,0.04); display:flex; flex-direction:column; gap:8px; }
+    .prod-img { width:100%; height:150px; border-radius:8px; object-fit:cover; background:#f3f4f6; }
+    .prod-meta { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .prod-name { font-weight:600; font-size:0.98rem; }
+    .prod-desc { font-size:0.88rem; color:#6b7280; min-height:36px; }
+    .price { font-weight:700; font-size:1rem; }
+    .add-btn { background:#06b6d4; color:white; padding:8px; border-radius:8px; border:none; cursor:pointer; }
+
+    /* Footer */
+    footer { margin-top:22px; padding:18px; background:#fff; border-radius:12px; text-align:center; color:#6b7280; font-size:0.95rem; }
+
+    /* Cart modal */
+    .modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background: rgba(2,6,23,0.45); z-index:60; }
+    .modal.open { display:flex; }
+    .modal-content { width:95%; max-width:520px; background:#fff; border-radius:12px; padding:16px; max-height:85vh; overflow:auto; }
+    .cart-item { display:flex; gap:10px; align-items:center; padding:8px 0; border-bottom:1px dashed #e6e6e9; }
+    .cart-item img { width:64px; height:64px; object-fit:cover; border-radius:8px; }
+    .cart-item .right { flex:1; }
+    .cart-actions { display:flex; gap:8px; align-items:center; margin-top:12px; justify-content:flex-end; }
+
+    .btn { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; }
+    .btn.secondary { background:#e6e6e9; color:#111827; }
+    .btn.primary { background:#0ea5a4; color:white; }
+
+    /* Form */
+    .order-form { display:flex; gap:8px; margin-top:12px; flex-direction:column; }
+    .order-form input { padding:10px; border-radius:8px; border:1px solid #e6e6e9; }
+
+    /* small screens */
+    @media (max-width:520px){ .hero img { height:160px; } .brand h1 { font-size:1rem; } .prod-desc { min-height:40px; } }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- HEADER -->
+  <header>
+    <div class="brand">
+      <!-- Replace images/logo.png with your uploaded logo file -->
+      <img src="images/logo.png" alt="logo" id="logoImg" onerror="this.style.visibility='hidden'">
+      <div>
+        <h1 id="companyName">Company Name</h1>
+        <div style="font-size:0.85rem;color:#6b7280" id="companyTag">WhatsApp Store</div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:10px; align-items:center;">
+      <button class="cart-btn" id="viewCartBtn">
+        <span>Cart</span>
+        <span class="cart-count" id="cartCount">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- HERO / Header image -->
+  <div class="hero">
+    <!-- Replace with images/hero.jpg -->
+    <img src="images/hero.jpg" alt="hero" id="heroImg" onerror="this.style.background='#ddd'">
+  </div>
+
+  <!-- SEARCH & FILTER -->
+  <div class="filters">
+    <div class="search">
+      <input type="search" id="searchInput" placeholder="Search products by name, description..." />
+    </div>
+    <select id="categoryFilter" class="select">
+      <option value="all">All Categories</option>
+    </select>
+  </div>
+
+  <!-- PRODUCTS -->
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px;">
+    <h2 style="font-size:1.05rem;">All Products</h2>
+    <div id="totalProducts" style="color:#6b7280"></div>
+  </div>
+
+  <div class="products" id="productsGrid">
+    <!-- JS will populate -->
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div style="font-weight:600;">Company Name</div>
+    <div style="margin-top:6px;">© <span id="footerYear"></span> All rights reserved • Contact: <span id="footerPhone">+91 98123 45678</span></div>
+  </footer>
+</div>
+
+<!-- CART MODAL -->
+<div class="modal" id="cartModal" aria-hidden="true">
+  <div class="modal-content">
+    <h3>Cart</h3>
+    <div id="cartList" style="margin-top:10px;"></div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
+      <div style="font-weight:700;">Total: ₹ <span id="cartTotal">0</span></div>
+      <div class="cart-actions">
+        <button class="btn secondary" id="closeCart">Close</button>
+        <button class="btn primary" id="orderNowBtn">Order Now</button>
+      </div>
+    </div>
+
+    <div id="orderFormWrap" style="display:none;">
+      <h4 style="margin-top:12px;">Delivery Details</h4>
+      <div class="order-form">
+        <input type="text" id="customerName" placeholder="Your name" />
+        <input type="tel" id="customerMobile" placeholder="Mobile (with country code, e.g., 9198xxxx)" />
+        <button class="btn primary" id="submitOrderBtn">Submit & Send WhatsApp</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================
+   Configure shop details
+   ========================= */
+const SHOP_WHATSAPP_NUMBER = '919812345678'; // <-- Replace with your WhatsApp number (country code + number, no + or dashes)
+const COMPANY_NAME = 'ZR Store';            // <-- Replace Company name
+const COMPANY_PHONE = '+91 98123 45678';   // <-- Footer phone
+// Default image filenames: put your files into images/ folder in repo
+// images/logo.png  images/hero.jpg  images/prod-1.jpg etc.
+
+/* =========================
+   Sample product data
+   Replace / extend this array or load from a JSON file.
+   Each product: id, name, category, image, description, price
+   ========================= */
+let PRODUCTS = [
+  { id: 'P001', name: 'Plain T-Shirt', category: 'Clothing', image: 'images/prod-1.jpg', description: 'Comfort cotton tee, available in multiple sizes.', price: 299 },
+  { id: 'P002', name: 'Sports Cap', category: 'Accessories', image: 'images/prod-2.jpg', description: 'Breathable cap for outdoor activities.', price: 199 },
+  { id: 'P003', name: 'Travel Mug', category: 'Home', image: 'images/prod-3.jpg', description: 'Stainless steel mug, 350ml.', price: 349 },
+  { id: 'P004', name: 'Denim Jeans', category: 'Clothing', image: 'images/prod-4.jpg', description: 'Slim-fit denim with stretch.', price: 1299 },
+  { id: 'P005', name: 'Phone Holder', category: 'Accessories', image: 'images/prod-5.jpg', description: 'Adjustable phone holder for car and desk.', price: 249 }
+];
+
+/* =========================
+   App state
+   ========================= */
+let cart = {}; // { productId: quantity }
+
+/* ========== Init UI ========== */
+document.getElementById('companyName').innerText = COMPANY_NAME;
+document.getElementById('footerPhone').innerText = COMPANY_PHONE;
+document.getElementById('footerYear').innerText = new Date().getFullYear();
+
+const productsGrid = document.getElementById('productsGrid');
+const categoryFilter = document.getElementById('categoryFilter');
+const searchInput = document.getElementById('searchInput');
+const cartCount = document.getElementById('cartCount');
+const totalProducts = document.getElementById('totalProducts');
+
+/* Populate categories */
+function populateCategories(){
+  const cats = Array.from(new Set(PRODUCTS.map(p => p.category)));
+  cats.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    categoryFilter.appendChild(opt);
+  });
+}
+
+/* Render products (with filters) */
+function renderProducts(){
+  const q = searchInput.value.trim().toLowerCase();
+  const cat = categoryFilter.value;
+
+  const filtered = PRODUCTS.filter(p => {
+    if(cat !== 'all' && p.category !== cat) return false;
+    if(q){
+      return (p.name + ' ' + p.description + ' ' + p.id).toLowerCase().includes(q);
+    }
+    return true;
+  });
+
+  totalProducts.innerText = `${filtered.length} products`;
+  productsGrid.innerHTML = '';
+
+  filtered.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const img = document.createElement('img');
+    img.className = 'prod-img';
+    img.src = p.image;
+    img.alt = p.name;
+    img.onerror = () => { img.src = 'https://via.placeholder.com/400x300?text=Product'; };
+
+    const meta = document.createElement('div');
+    meta.className = 'prod-meta';
+    const name = document.createElement('div');
+    name.className = 'prod-name';
+    name.innerText = `${p.name} • ${p.id}`;
+
+    const price = document.createElement('div');
+    price.className = 'price';
+    price.innerText = '₹ ' + p.price;
+
+    meta.appendChild(name);
+    meta.appendChild(price);
+
+    const desc = document.createElement('div');
+    desc.className = 'prod-desc';
+    desc.innerText = p.description;
+
+    const btn = document.createElement('button');
+    btn.className = 'add-btn';
+    btn.innerText = 'Add to Cart';
+    btn.onclick = () => addToCart(p.id);
+
+    // append
+    card.appendChild(img);
+    card.appendChild(meta);
+    card.appendChild(desc);
+    card.appendChild(btn);
+    productsGrid.appendChild(card);
+  });
+}
+
+/* Add to cart logic */
+function addToCart(productId){
+  if(!cart[productId]) cart[productId] = 0;
+  cart[productId] += 1;
+  saveCart();
+  updateCartCount();
+  // small visual cue:
+  const old = document.getElementById('viewCartBtn');
+  old.style.transform = 'scale(0.98)';
+  setTimeout(()=>old.style.transform = '', 120);
+}
+
+/* Cart persistence */
+function saveCart(){ localStorage.setItem('wh_cart', JSON.stringify(cart)); }
+function loadCart(){ const raw = localStorage.getItem('wh_cart'); cart = raw ? JSON.parse(raw) : {}; updateCartCount(); }
+
+/* Cart count */
+function updateCartCount(){
+  const totalQty = Object.values(cart).reduce((s,n)=>s+n,0);
+  cartCount.innerText = totalQty;
+}
+
+/* Cart modal */
+const cartModal = document.getElementById('cartModal');
+const cartList = document.getElementById('cartList');
+const cartTotalEl = document.getElementById('cartTotal');
+
+function openCart(){
+  renderCartList();
+  cartModal.classList.add('open');
+  cartModal.setAttribute('aria-hidden', 'false');
+}
+function closeCart(){
+  cartModal.classList.remove('open');
+  cartModal.setAttribute('aria-hidden', 'true');
+  document.getElementById('orderFormWrap').style.display = 'none';
+}
+
+/* Render cart list */
+function renderCartList(){
+  cartList.innerHTML = '';
+  const ids = Object.keys(cart);
+  if(ids.length === 0){
+    cartList.innerHTML = '<div style="padding:10px;color:#6b7280">Your cart is empty.</div>';
+    cartTotalEl.innerText = '0';
+    return;
+  }
+  let total = 0;
+  ids.forEach(id=>{
+    const qty = cart[id];
+    const product = PRODUCTS.find(p=>p.id===id);
+    if(!product) return;
+    const row = document.createElement('div');
+    row.className = 'cart-item';
+    const img = document.createElement('img');
+    img.src = product.image;
+    img.onerror = () => { img.src = 'https://via.placeholder.com/200x200?text=No+Image'; };
+
+    const right = document.createElement('div');
+    right.className = 'right';
+    right.innerHTML = `<div style="font-weight:700">${product.name} <small style="color:#6b7280">(${product.id})</small></div>
+                       <div style="font-size:0.9rem;color:#6b7280;margin-top:4px;">₹ ${product.price} x ${qty} = ₹ ${product.price * qty}</div>`;
+
+    const controls = document.createElement('div');
+    controls.style.display = 'flex';
+    controls.style.gap = '6px';
+    controls.style.alignItems = 'center';
+
+    const minus = document.createElement('button');
+    minus.className = 'btn secondary';
+    minus.innerText = '-';
+    minus.onclick = () => { changeQty(id, -1); };
+
+    const plus = document.createElement('button');
+    plus.className = 'btn secondary';
+    plus.innerText = '+';
+    plus.onclick = () => { changeQty(id, +1); };
+
+    const remove = document.createElement('button');
+    remove.className = 'btn secondary';
+    remove.innerText = 'Remove';
+    remove.onclick = () => { removeFromCart(id); };
+
+    controls.appendChild(minus);
+    controls.appendChild(plus);
+    controls.appendChild(remove);
+
+    row.appendChild(img);
+    row.appendChild(right);
+    row.appendChild(controls);
+    cartList.appendChild(row);
+
+    total += product.price * qty;
+  });
+
+  cartTotalEl.innerText = total;
+}
+
+/* Change qty */
+function changeQty(id, delta){
+  if(!cart[id]) return;
+  cart[id] += delta;
+  if(cart[id] <= 0) delete cart[id];
+  saveCart();
+  renderCartList();
+  updateCartCount();
+}
+
+/* Remove item */
+function removeFromCart(id){
+  delete cart[id];
+  saveCart();
+  renderCartList();
+  updateCartCount();
+}
+
+/* ORDER FLOW: show form and then send WhatsApp */
+document.getElementById('viewCartBtn').addEventListener('click', openCart);
+document.getElementById('closeCart').addEventListener('click', closeCart);
+
+// when "Order Now" clicked, show name/mobile form
+document.getElementById('orderNowBtn').addEventListener('click', () => {
+  document.getElementById('orderFormWrap').style.display = 'block';
+  document.getElementById('customerName').focus();
+});
+
+// Submit -> build message and open WhatsApp
+document.getElementById('submitOrderBtn').addEventListener('click', () => {
+  const name = document.getElementById('customerName').value.trim();
+  const mobile = document.getElementById('customerMobile').value.trim();
+
+  if(!name || !mobile){
+    alert('कृपया अपना नाम और मोबाइल नंबर दर्ज करें। (example: 9198xxxx)');
+    return;
+  }
+
+  const items = Object.keys(cart).map(id => {
+    const p = PRODUCTS.find(x => x.id === id);
+    return `${p.id} - ${p.name} x ${cart[id]} - ₹${p.price * cart[id]}`;
+  });
+
+  if(items.length === 0){
+    alert('Cart empty!');
+    return;
+  }
+
+  const total = Object.keys(cart).reduce((s,id)=>{
+    const p = PRODUCTS.find(x=>x.id===id);
+    return s + (p.price * cart[id]);
+  }, 0);
+
+  // Build message (readable format)
+  const messageLines = [
+    `New Order from ${COMPANY_NAME}`,
+    `Name: ${name}`,
+    `Mobile: ${mobile}`,
+    `---------------------`,
+    `Items:`,
+    ...items,
+    `---------------------`,
+    `Total: ₹ ${total}`,
+    `Please confirm and reply with payment/delivery details.`
+  ];
+
+  const text = encodeURIComponent(messageLines.join('\n'));
+
+  // Open WhatsApp chat with shop number and prefilled text
+  // Using wa.me format
+  const shopNumber = SHOP_WHATSAPP_NUMBER.replace(/\D/g,''); // only digits
+  const waLink = `https://wa.me/${shopNumber}?text=${text}`;
+
+  // open new tab/window
+  window.open(waLink, '_blank');
+
+  // optional: clear cart after sending (comment/uncomment as you prefer)
+  // cart = {}; saveCart(); updateCartCount(); renderCartList(); closeCart();
+});
+
+/* =========================
+   Helpers & init
+   ========================= */
+function init(){
+  // set default images if missing
+  document.getElementById('logoImg').onerror = function(){ this.style.display='none'; };
+  document.getElementById('heroImg').onerror = function(){ this.style.display='none'; };
+
+  // fill categories and products
+  populateCategories();
+  renderProducts();
+
+  // events
+  searchInput.addEventListener('input', () => renderProducts());
+  categoryFilter.addEventListener('change', () => renderProducts());
+
+  // load cart from storage
+  loadCart();
+}
+
+init();
+
+/* ====== Optional: expose some functions for debugging in console ====== */
+window.__SHOP = { PRODUCTS, cart, addToCart, renderProducts, renderCartList };
+</script>
+
+</body>
+</html>
