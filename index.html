@@ -80,30 +80,38 @@ footer{margin-top:22px;padding:18px;background:#fff;border-radius:12px;text-alig
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="script.js">
-const SHEET_ID = '12zx-_NcSOirQi3BXafSksyXB01-hvVRWhRnPFSs4VZ0';
+
+<script>
+// 👇
+const SHEET_ID = '1VbT9BCz5_dzYPe_-ClJJPIKbGuwPXKEEXseKn49VzGk';
 const WHATSAPP_NUMBER = '919978051852';
 let PRODUCTS = [];
 let cart = {};
 
 async function loadProducts(){
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
-  const res = await fetch(url);
-  const text = await res.text();
-  const data = JSON.parse(text.substr(47).slice(0,-2));
-  const rows = data.table.rows;
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+    const res = await fetch(url);
+    const text = await res.text();
+    const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S\w]+)\)/)[1]);
+    const rows = json.table.rows;
 
-  PRODUCTS = rows.map((r,i)=>({
-    id: 'P'+(i+1).toString().padStart(3,'0'),
-    category: r.c[1]?.v || '',
-    name: r.c[2]?.v || '',
-    description: r.c[3]?.v || '',
-    image: r.c[4]?.v || 'images/placeholder.jpg',
-    size: r.c[5]?.v || '',
-    price: r.c[6]?.v || 0
-  }));
+    PRODUCTS = rows.map((r,i)=>({
+      id: 'P'+(i+1).toString().padStart(3,'0'),
+      category: r.c[1]?.v?.trim() || '',
+      name: r.c[2]?.v?.trim() || '',
+      description: r.c[3]?.v?.trim() || '',
+      image: r.c[4]?.v?.trim() || 'images/placeholder.jpg',
+      size: r.c[5]?.v?.trim() || '',
+      price: parseFloat(r.c[6]?.v) || 0
+    })).filter(p=>p.name);
 
-  renderProducts();
-  populateCategories();
+    renderProducts();
+    populateCategories();
+  } catch (err) {
+    console.error("❌ Error loading sheet:", err);
+    alert("Google Sheet data fetch failed. Check sheet sharing settings (Anyone with link → Viewer).");
+  }
 }
 
 const grid = document.getElementById('productsGrid');
@@ -114,7 +122,16 @@ function renderProducts(){
   const q = search.value.toLowerCase();
   const cat = filter.value;
   grid.innerHTML='';
-  const filtered = PRODUCTS.filter(p=> (cat==='all'||p.category===cat) && (p.name.toLowerCase().includes(q)||p.description.toLowerCase().includes(q)));
+  const filtered = PRODUCTS.filter(p=> 
+    (cat==='all'||p.category===cat) && 
+    (p.name.toLowerCase().includes(q)||p.description.toLowerCase().includes(q))
+  );
+
+  if(filtered.length===0){
+    grid.innerHTML = `<p style="text-align:center;color:#777;">No products found.</p>`;
+    return;
+  }
+
   filtered.forEach(p=>{
     const card = document.createElement('div');
     card.className='card';
@@ -130,7 +147,7 @@ function renderProducts(){
 }
 
 function populateCategories(){
-  const cats = [...new Set(PRODUCTS.map(p=>p.category))];
+  const cats = [...new Set(PRODUCTS.map(p=>p.category))].filter(c=>c);
   cats.forEach(c=>{
     const opt=document.createElement('option');
     opt.value=c; opt.textContent=c;
@@ -138,7 +155,6 @@ function populateCategories(){
   });
 }
 
-// Cart
 function addToCart(id){ if(!cart[id]) cart[id]=1; else cart[id]++; updateCartCount(); }
 function updateCartCount(){ document.getElementById('cartCount').innerText=Object.values(cart).reduce((a,b)=>a+b,0); }
 
@@ -165,33 +181,57 @@ function renderCartItems(){
   });
 }
 
-// WhatsApp + PDF
 document.getElementById('generatePDFBtn').onclick=async()=>{
-  if(Object.keys(cart).length===0){ alert('Cart empty'); return; }
+  if(Object.keys(cart).length===0){ alert('Cart is empty'); return; }
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
   let y=10;
-  pdf.setFontSize(16); pdf.text('YES FASHION HUB Order',10,y); y+=10;
+  pdf.setFontSize(16);
+  pdf.text('YES FASHION HUB Order',10,y); 
+  y+=10;
+  pdf.setFontSize(12);
   let total=0;
   for(const id of Object.keys(cart)){
     const p = PRODUCTS.find(x=>x.id===id);
     const qty = cart[id]; total+=p.price*qty;
-    pdf.setFontSize(12); pdf.text(`${p.name} | ₹${p.price} x ${qty} = ₹${p.price*qty}`,10,y); y+=7;
-    const imgData = await loadImage(p.image); pdf.addImage(imgData,'JPEG',10,y,40,40); y+=45;
+    pdf.text(`${p.name} | ₹${p.price} x ${qty} = ₹${p.price*qty}`,10,y); 
+    y+=7;
+    try{
+      const imgData = await loadImage(p.image);
+      pdf.addImage(imgData,'JPEG',10,y,35,35);
+      y+=40;
+    }catch(e){ y+=10; }
     if(y>250){ pdf.addPage(); y=10; }
   }
-  pdf.setFontSize(14); pdf.text(`Total: ₹${total}`,10,y+5);
+  pdf.text(`Total: ₹${total}`,10,y+5);
   const blob = pdf.output('blob');
   const url = URL.createObjectURL(blob);
-  
-  // WhatsApp message with PDF link
-  let msg = `*YES FASHION HUB Order*\nTotal: ₹${total}\nPDF Link: ${url}`;
-  const waURL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+  let message = `*YES FASHION HUB Order*%0A`;
+  message += `Total: ₹${total}%0A`;
+  message += `PDF: ${url}%0A`;
+  Object.keys(cart).forEach(id=>{
+    const p = PRODUCTS.find(x=>x.id===id);
+    message += `• ${p.name} (${p.category}) - ₹${p.price} x ${cart[id]}%0A`;
+  });
+  const waURL = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
   window.open(waURL,'_blank');
 };
 
-// Image helper
-function loadImage(url){ return new Promise(resolve=>{ const img=new Image(); img.crossOrigin='anonymous'; img.onload=()=>{ const c=document.createElement('canvas'); c.width=img.width; c.height=img.height; c.getContext('2d').drawImage(img,0,0); resolve(c.toDataURL('image/jpeg')); }; img.src=url; }); }
+function loadImage(url){ 
+  return new Promise((resolve,reject)=>{
+    const img=new Image(); 
+    img.crossOrigin='anonymous'; 
+    img.onload=()=>{
+      const c=document.createElement('canvas');
+      c.width=img.width; 
+      c.height=img.height; 
+      c.getContext('2d').drawImage(img,0,0);
+      resolve(c.toDataURL('image/jpeg'));
+    }; 
+    img.onerror=()=>reject();
+    img.src=url;
+  });
+}
 
 filter.addEventListener('change',renderProducts);
 search.addEventListener('input',renderProducts);
