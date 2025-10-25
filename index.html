@@ -81,30 +81,33 @@ YES FASHION HUB • Near Patelwadi, Pedak Road, Rajkot • Email: yesfashionhub@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-<script>
+<!-- JS Script -->
+<script src="script.js"></script>
+
 // CONFIG
 const SHEET_ID = '1VbT9BCz5_dzYPe_-ClJJPIKbGuwPXKEEXseKn49VzGk';
-const DRIVE_FOLDER = 'https://drive.google.com/uc?export=view&id=1xb0uDSKHQkiCWgZ_GvtZUSV1pcFU-dLX/';
 const WHATSAPP_NUMBER = '919978051852';
 let PRODUCTS = [];
 let cart = {};
 
-// Fetch products from Google Sheet
+// Fetch products
 async function loadProducts(){
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
   const res = await fetch(url);
   const text = await res.text();
   const data = JSON.parse(text.substr(47).slice(0,-2));
   const rows = data.table.rows;
- PRODUCTS = rows.map(r=>({
-  id: 'P'+(rows.indexOf(r)+1).toString().padStart(3,'0'), // Auto ID
-  category: r.c[1]?.v || '',
-  name: r.c[2]?.v || '',
-  description: r.c[3]?.v || '',
-  image: r.c[4]?.v ? r.c[4].v : 'images/placeholder.jpg',
-  size: r.c[5]?.v || '',
-  price: r.c[6]?.v || 0
-}));
+
+  PRODUCTS = rows.map((r,i)=>({
+    id: 'P'+(i+1).toString().padStart(3,'0'),
+    category: r.c[1]?.v || '',
+    name: r.c[2]?.v || '',
+    description: r.c[3]?.v || '',
+    image: r.c[4]?.v || 'images/placeholder.jpg',
+    size: r.c[5]?.v || '',
+    price: r.c[6]?.v || 0
+  }));
+
   renderProducts();
   populateCategories();
 }
@@ -122,10 +125,10 @@ function renderProducts(){
   filtered.forEach(p=>{
     const card = document.createElement('div');
     card.className = 'card';
-    card.innerHTML = `
+    card.innerHTML=`
       <img src="${p.image}" class="prod-img" alt="${p.name}">
       <div class="prod-name">${p.name}</div>
-      <div class="prod-desc">${p.description}</div>
+      <div class="prod-desc">${p.description}${p.size ? ' | Size: '+p.size : ''}</div>
       <div class="price">₹ ${p.price}</div>
       <button class="add-btn" onclick="addToCart('${p.id}')">Add to Cart</button>
     `;
@@ -144,37 +147,26 @@ function populateCategories(){
   });
 }
 
-// Cart
-function addToCart(id){
-  if(!cart[id]) cart[id]=1; else cart[id]++;
-  updateCartCount();
-}
+// Cart functions
+function addToCart(id){ if(!cart[id]) cart[id]=1; else cart[id]++; updateCartCount(); }
+function updateCartCount(){ document.getElementById('cartCount').innerText=Object.values(cart).reduce((a,b)=>a+b,0); }
 
-function updateCartCount(){
-  const total = Object.values(cart).reduce((a,b)=>a+b,0);
-  document.getElementById('cartCount').innerText=total;
-}
-
-// View Cart
+// View cart modal
 const cartModal = document.getElementById('cartModal');
-const viewCartBtn = document.getElementById('viewCartBtn');
-const closeCartBtn = document.getElementById('closeCartBtn');
-const cartItemsDiv = document.getElementById('cartItems');
-
-viewCartBtn.onclick = ()=>{
+document.getElementById('viewCartBtn').onclick = ()=>{
   cartModal.style.display='flex';
   renderCartItems();
 };
-closeCartBtn.onclick = ()=>{cartModal.style.display='none';};
+document.getElementById('closeCartBtn').onclick = ()=>{cartModal.style.display='none';};
 
 function renderCartItems(){
+  const cartItemsDiv = document.getElementById('cartItems');
   cartItemsDiv.innerHTML='';
   let totalPrice=0;
   Object.keys(cart).forEach(id=>{
     const p = PRODUCTS.find(x=>x.id===id);
     const qty = cart[id];
-    totalPrice += p.price * qty;
-
+    totalPrice += p.price*qty;
     const div = document.createElement('div');
     div.className='cart-item';
     div.innerHTML=`
@@ -186,25 +178,22 @@ function renderCartItems(){
     `;
     cartItemsDiv.appendChild(div);
   });
-  // Total
   const totalDiv = document.createElement('div');
-  totalDiv.style.fontWeight='700';
-  totalDiv.style.fontSize='1rem';
-  totalDiv.style.marginTop='12px';
-  totalDiv.innerText='Total: ₹ '+Object.keys(cart).reduce((sum,id)=>{
+  totalDiv.style.fontWeight='700'; totalDiv.style.marginTop='10px';
+  totalDiv.innerText = 'Total: ₹ ' + Object.keys(cart).reduce((sum,id)=>{
     const p = PRODUCTS.find(x=>x.id===id);
-    return sum + (p.price*cart[id]);
+    return sum + p.price*cart[id];
   },0);
   cartItemsDiv.appendChild(totalDiv);
 }
 
-// Generate PDF & Share
-const { jsPDF } = window.jspdf;
+// PDF Generation
 document.getElementById('generatePDFBtn').onclick=async()=>{
+  const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
   let y=10;
   pdf.setFontSize(16);
-  pdf.text('YES FASHION HUB - Order Details',10,y); y+=10;
+  pdf.text('YES FASHION HUB - Order',10,y); y+=10;
   pdf.setFontSize(12);
   pdf.text('Near Patelwadi, Pedak Road, Rajkot',10,y); y+=7;
   pdf.text('Email: yesfashionhub@gmail.com',10,y); y+=10;
@@ -215,11 +204,10 @@ document.getElementById('generatePDFBtn').onclick=async()=>{
     pdf.text(`${p.name} | ₹${p.price} x ${qty} = ₹${p.price*qty}`,10,y); y+=7;
     const img = await loadImage(p.image);
     pdf.addImage(img,'JPEG',10,y,40,40);
-    y+=45;
-    if(y>250){pdf.addPage();y=10;}
+    y+=45; if(y>250){pdf.addPage(); y=10;}
   }
   pdf.save('Order.pdf');
-  alert('PDF Generated! Please share on WhatsApp.');
+  alert('PDF Generated! Share on WhatsApp.');
 };
 
 function loadImage(url){
@@ -232,10 +220,8 @@ function loadImage(url){
 }
 function canvasToDataURL(img){
   const canvas = document.createElement('canvas');
-  canvas.width=img.width;
-  canvas.height=img.height;
-  const ctx=canvas.getContext('2d');
-  ctx.drawImage(img,0,0);
+  canvas.width=img.width; canvas.height=img.height;
+  canvas.getContext('2d').drawImage(img,0,0);
   return canvas.toDataURL('image/jpeg');
 }
 
@@ -243,9 +229,9 @@ function canvasToDataURL(img){
 filter.addEventListener('change',renderProducts);
 search.addEventListener('input',renderProducts);
 
-// Initialize
+// Init
 loadProducts();
-</script>
 
+  
 </body>
 </html>
