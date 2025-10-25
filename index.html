@@ -1,459 +1,249 @@
-<!doctype html>
-<html lang="hi">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>YES Fashion Hub</title>
-  <style>
-    /* Basic reset */
-    * { box-sizing: border-box; margin:0; padding:0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
-    body { background: #f6f7fb; color:#111827; line-height:1.4; padding-bottom: 60px; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YES FASHION HUB - WhatsApp Store</title>
 
-    /* Container */
-    .container { max-width:1100px; margin:20px auto; padding:16px; }
-
-    /* Header */
-    header { display:flex; align-items:center; justify-content:space-between; gap:12px; background:#fff; padding:10px 16px; border-radius:12px; box-shadow:0 6px 18px rgba(13,38,76,0.06); }
-    .brand { display:flex; align-items:center; gap:12px; }
-    .brand img { width:48px; height:48px; object-fit:cover; border-radius:8px; }
-    .brand h1 { font-size:1.1rem; margin-bottom:2px; }
-    .cart-btn { position:relative; background:#0ea5a4; color:white; padding:8px 12px; border-radius:10px; cursor:pointer; border:none; display:flex; gap:8px; align-items:center; }
-    .cart-count { position:absolute; top:-6px; right:-6px; background:#ef4444; width:20px; height:20px; border-radius:50%; color:white; display:flex; align-items:center; justify-content:center; font-size:0.75rem; }
-
-    /* Hero */
-    .hero { margin-top:16px; overflow:hidden; border-radius:12px; background:#ddd; }
-    .hero img { width:100%; height:220px; object-fit:cover; display:block; }
-
-    /* Search & filters */
-    .filters { display:flex; gap:12px; margin-top:14px; }
-    .search { flex:1; display:flex; gap:8px; }
-    .search input, .select { padding:10px 12px; border-radius:10px; border:1px solid #e6e6e9; background:#fff; width:100%; }
-    .select { max-width:220px; }
-
-    /* Products grid */
-    .products { margin-top:18px; display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:14px; }
-
-    .card { background:#fff; border-radius:12px; padding:12px; box-shadow:0 8px 18px rgba(15,23,42,0.04); display:flex; flex-direction:column; gap:8px; }
-    .prod-img { width:100%; height:150px; border-radius:8px; object-fit:cover; background:#f3f4f6; }
-    .prod-meta { display:flex; justify-content:space-between; align-items:center; gap:8px; }
-    .prod-name { font-weight:600; font-size:0.98rem; }
-    .prod-desc { font-size:0.88rem; color:#6b7280; min-height:36px; }
-    .price { font-weight:700; font-size:1rem; }
-    .add-btn { background:#06b6d4; color:white; padding:8px; border-radius:8px; border:none; cursor:pointer; }
-
-    /* Footer */
-    footer { margin-top:22px; padding:18px; background:#fff; border-radius:12px; text-align:center; color:#6b7280; font-size:0.95rem; }
-
-    /* Cart modal */
-    .modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background: rgba(2,6,23,0.45); z-index:60; }
-    .modal.open { display:flex; }
-    .modal-content { width:95%; max-width:520px; background:#fff; border-radius:12px; padding:16px; max-height:85vh; overflow:auto; }
-    .cart-item { display:flex; gap:10px; align-items:center; padding:8px 0; border-bottom:1px dashed #e6e6e9; }
-    .cart-item img { width:64px; height:64px; object-fit:cover; border-radius:8px; }
-    .cart-item .right { flex:1; }
-    .cart-actions { display:flex; gap:8px; align-items:center; margin-top:12px; justify-content:flex-end; }
-
-    .btn { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; }
-    .btn.secondary { background:#e6e6e9; color:#111827; }
-    .btn.primary { background:#0ea5a4; color:white; }
-
-    /* Form */
-    .order-form { display:flex; gap:8px; margin-top:12px; flex-direction:column; }
-    .order-form input { padding:10px; border-radius:8px; border:1px solid #e6e6e9; }
-
-    /* small screens */
-    @media (max-width:520px){ .hero img { height:160px; } .brand h1 { font-size:1rem; } .prod-desc { min-height:40px; } }
-  </style>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial, sans-serif;}
+body{background:#f7f7f7;color:#111;line-height:1.4;}
+.container{max-width:1100px;margin:0 auto;padding:10px;}
+header{display:flex;align-items:center;justify-content:space-between;background:#fff;padding:12px;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.05);}
+.brand{display:flex;align-items:center;gap:12px;}
+.brand img{width:50px;height:50px;object-fit:cover;border-radius:8px;}
+.cart-btn{position:relative;background:#0ea5a4;color:#fff;padding:8px 12px;border-radius:10px;cursor:pointer;border:none;}
+.cart-count{position:absolute;top:-6px;right:-6px;background:#ef4444;width:20px;height:20px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.75rem;}
+.hero{margin-top:15px;border-radius:12px;overflow:hidden;}
+.hero img{width:100%;height:220px;object-fit:cover;}
+.filters{display:flex;gap:10px;margin-top:15px;flex-wrap:wrap;}
+.search{flex:1;display:flex;gap:8px;}
+.search input,.select{padding:10px;border-radius:8px;border:1px solid #ddd;background:#fff;width:100%;}
+.select{max-width:220px;}
+.products{margin-top:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
+.card{background:#fff;border-radius:12px;padding:12px;box-shadow:0 6px 15px rgba(0,0,0,0.05);display:flex;flex-direction:column;gap:8px;}
+.prod-img{width:100%;height:150px;border-radius:8px;object-fit:cover;background:#eee;}
+.prod-name{font-weight:600;font-size:1rem;}
+.prod-desc{font-size:0.88rem;color:#555;min-height:36px;}
+.price{font-weight:700;font-size:1rem;}
+.add-btn{background:#06b6d4;color:white;padding:8px;border-radius:8px;border:none;cursor:pointer;}
+footer{margin-top:22px;padding:18px;background:#fff;border-radius:12px;text-align:center;color:#555;font-size:0.9rem;}
+.cart-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);display:none;justify-content:center;align-items:center;z-index:999;}
+.cart-content{background:#fff;padding:20px;border-radius:12px;max-width:500px;width:90%;max-height:80%;overflow-y:auto;}
+.cart-item{display:flex;align-items:center;gap:12px;padding:8px;border-bottom:1px solid #eee;}
+.cart-item img{width:60px;height:60px;object-fit:cover;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+.cart-item-info{flex:1;}
+.cart-item-name{font-weight:600;font-size:0.95rem;}
+.cart-item-price{font-size:0.85rem;color:#555;margin-top:2px;}
+.cart-close{cursor:pointer;background:#ef4444;color:#fff;padding:6px 10px;border:none;border-radius:6px;margin-bottom:10px;}
+.generate-pdf{background:#0ea5a4;color:white;padding:10px;border:none;border-radius:8px;width:100%;cursor:pointer;margin-top:10px;}
+</style>
 </head>
 <body>
 
 <div class="container">
-  <!-- HEADER -->
-  <header>
-    <div class="brand">
-      <!-- Replace images/logo.png with your uploaded logo file -->
-      <img src="images/logo.png" alt="logo" id="logoImg" onerror="this.style.visibility='hidden'">
-      <div>
-        <h1 id="companyName">YES Fashion Hub </h1>
-        <div style="font-size:0.85rem;color:#6b7280" id="companyTag">WhatsApp Store</div>
-      </div>
-    </div>
+<header>
+<div class="brand">
+<img src="images/logo.png" alt="logo">
+<div>
+<h1>YES FASHION HUB</h1>
+<div style="font-size:0.85rem;color:#555;">WhatsApp Store</div>
+</div>
+</div>
+<button class="cart-btn" id="viewCartBtn">Cart <span class="cart-count" id="cartCount">0</span></button>
+</header>
 
-    <div style="display:flex; gap:10px; align-items:center;">
-      <button class="cart-btn" id="viewCartBtn">
-        <span>Cart</span>
-        <span class="cart-count" id="cartCount">0</span>
-      </button>
-    </div>
-  </header>
+<div class="hero"><img src="images/hero.jpg" alt="banner"></div>
 
-  <!-- HERO / Header image -->
-  <div class="hero">
-    <!-- Replace with images/hero.jpg -->
-    <img src="images/hero.jpg" alt="hero" id="heroImg" onerror="this.style.background='#ddd'">
-  </div>
-
-  <!-- SEARCH & FILTER -->
-  <div class="filters">
-    <div class="search">
-      <input type="search" id="searchInput" placeholder="Search products by name, description..." />
-    </div>
-    <select id="categoryFilter" class="select">
-      <option value="all">All Categories</option>
-    </select>
-  </div>
-
-  <!-- PRODUCTS -->
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px;">
-    <h2 style="font-size:1.05rem;">All Products</h2>
-    <div id="totalProducts" style="color:#6b7280"></div>
-  </div>
-
-  <div class="products" id="productsGrid">
-    <!-- JS will populate -->
-  </div>
-
-  <!-- FOOTER -->
-  <footer>
-    <div style="font-weight:600;">Company Name</div>
-    <div style="margin-top:6px;">© <span id="footerYear"></span> All rights reserved • Contact: <span id="footerPhone">+91 98123 45678</span></div>
-  </footer>
+<div class="filters">
+<div class="search"><input type="search" id="searchInput" placeholder="Search Products..."></div>
+<select id="categoryFilter" class="select"><option value="all">All Categories</option></select>
 </div>
 
-<!-- CART MODAL -->
-<div class="modal" id="cartModal" aria-hidden="true">
-  <div class="modal-content">
-    <h3>Cart</h3>
-    <div id="cartList" style="margin-top:10px;"></div>
+<h2 style="margin-top:15px;">All Products</h2>
+<div class="products" id="productsGrid"></div>
 
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
-      <div style="font-weight:700;">Total: ₹ <span id="cartTotal">0</span></div>
-      <div class="cart-actions">
-        <button class="btn secondary" id="closeCart">Close</button>
-        <button class="btn primary" id="orderNowBtn">Order Now</button>
-      </div>
-    </div>
-
-    <div id="orderFormWrap" style="display:none;">
-      <h4 style="margin-top:12px;">Delivery Details</h4>
-      <div class="order-form">
-        <input type="text" id="customerName" placeholder="Your name" />
-        <input type="tel" id="customerMobile" placeholder="Mobile (with country code, e.g., 9198xxxx)" />
-        <button class="btn primary" id="submitOrderBtn">Submit & Send WhatsApp</button>
-      </div>
-    </div>
-  </div>
+<footer>
+YES FASHION HUB • Near Patelwadi, Pedak Road, Rajkot • Email: yesfashionhub@gmail.com
+</footer>
 </div>
+
+<!-- Cart Modal -->
+<div class="cart-modal" id="cartModal">
+<div class="cart-content">
+<button class="cart-close" id="closeCartBtn">Close</button>
+<div id="cartItems"></div>
+<button class="generate-pdf" id="generatePDFBtn">Generate PDF & Share</button>
+</div>
+</div>
+
+<!-- JS Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
-/* =========================
-   Configure shop details
-   ========================= */
-const SHOP_WHATSAPP_NUMBER = '919978051852'; // <-- Replace with your WhatsApp number (country code + number, no + or dashes)
-const COMPANY_NAME = 'YES Fashion Hub';            // <-- Replace Company name
-const COMPANY_PHONE = '+91 9978051852';   // <-- Footer phone
-// Default image filenames: put your files into images/ folder in repo
-// images/logo.png  images/hero.jpg  images/prod-1.jpg etc.
+// CONFIG
+const SHEET_ID = '1VbT9BCz5_dzYPe_-ClJJPIKbGuwPXKEEXseKn49VzGk';
+const DRIVE_FOLDER = 'https://drive.google.com/uc?export=view&id=1xb0uDSKHQkiCWgZ_GvtZUSV1pcFU-dLX/';
+const WHATSAPP_NUMBER = '919978051852';
+let PRODUCTS = [];
+let cart = {};
 
-/* =========================
-   Sample product data
-   Replace / extend this array or load from a JSON file.
-   Each product: id, name, category, image, description, price
-   ========================= */
-let PRODUCTS = [
-  { id: 'P001', name: 'Deeptex Miss India Vol. 91', category: 'Cotton Printed Dress Material', image: 'images/prod-1.jpg', description: 'Comfort cotton tee, available in multiple sizes.', price: 299 },
-  { id: 'P002', name: 'Cotton Kurti Pant', category: 'Cotton 2 Pcs', image: 'images/prod-2.jpg', description: 'Breathable cap for outdoor activities.', price: 199 },
-  { id: 'P003', name: 'Kurti pant Dupatta', category: 'Cotton 3 Pcs', image: 'images/prod-3.jpg', description: 'Stainless steel mug, 350ml.', price: 349 },
-  { id: 'P004', name: 'Rayon Kurti pant', category: 'Rayon Collection', image: 'images/prod-4.jpg', description: 'Slim-fit denim with stretch.', price: 1299 },
-  { id: 'P005', name: 'khadi kurti pant', category: 'Khadi Collection', image: 'images/prod-5.jpg', description: 'Adjustable phone holder for car and desk.', price: 249 }
-];
-
-/* =========================
-   App state
-   ========================= */
-let cart = {}; // { productId: quantity }
-
-/* ========== Init UI ========== */
-document.getElementById('companyName').innerText = COMPANY_NAME;
-document.getElementById('footerPhone').innerText = COMPANY_PHONE;
-document.getElementById('footerYear').innerText = new Date().getFullYear();
-
-const productsGrid = document.getElementById('productsGrid');
-const categoryFilter = document.getElementById('categoryFilter');
-const searchInput = document.getElementById('searchInput');
-const cartCount = document.getElementById('cartCount');
-const totalProducts = document.getElementById('totalProducts');
-
-/* Populate categories */
-function populateCategories(){
-  const cats = Array.from(new Set(PRODUCTS.map(p => p.category)));
-  cats.forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c;
-    opt.textContent = c;
-    categoryFilter.appendChild(opt);
-  });
+// Fetch products from Google Sheet
+async function loadProducts(){
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+  const res = await fetch(url);
+  const text = await res.text();
+  const data = JSON.parse(text.substr(47).slice(0,-2));
+  const rows = data.table.rows;
+  PRODUCTS = rows.map(r=>({
+    id: r.c[0]?.v,
+    name: r.c[1]?.v,
+    category: r.c[2]?.v,
+    image: r.c[3]?.v ? r.c[3].v : DRIVE_FOLDER+'placeholder.jpg',
+    description: r.c[4]?.v,
+    price: r.c[5]?.v
+  }));
+  renderProducts();
+  populateCategories();
 }
 
-/* Render products (with filters) */
+// Render products
+const grid = document.getElementById('productsGrid');
+const filter = document.getElementById('categoryFilter');
+const search = document.getElementById('searchInput');
+
 function renderProducts(){
-  const q = searchInput.value.trim().toLowerCase();
-  const cat = categoryFilter.value;
-
-  const filtered = PRODUCTS.filter(p => {
-    if(cat !== 'all' && p.category !== cat) return false;
-    if(q){
-      return (p.name + ' ' + p.description + ' ' + p.id).toLowerCase().includes(q);
-    }
-    return true;
-  });
-
-  totalProducts.innerText = `${filtered.length} products`;
-  productsGrid.innerHTML = '';
-
-  filtered.forEach(p => {
+  const q = search.value.toLowerCase();
+  const cat = filter.value;
+  grid.innerHTML = '';
+  const filtered = PRODUCTS.filter(p=> (cat==='all'||p.category===cat) && (p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)));
+  filtered.forEach(p=>{
     const card = document.createElement('div');
     card.className = 'card';
-
-    const img = document.createElement('img');
-    img.className = 'prod-img';
-    img.src = p.image;
-    img.alt = p.name;
-    img.onerror = () => { img.src = 'https://via.placeholder.com/400x300?text=Product'; };
-
-    const meta = document.createElement('div');
-    meta.className = 'prod-meta';
-    const name = document.createElement('div');
-    name.className = 'prod-name';
-    name.innerText = `${p.name} • ${p.id}`;
-
-    const price = document.createElement('div');
-    price.className = 'price';
-    price.innerText = '₹ ' + p.price;
-
-    meta.appendChild(name);
-    meta.appendChild(price);
-
-    const desc = document.createElement('div');
-    desc.className = 'prod-desc';
-    desc.innerText = p.description;
-
-    const btn = document.createElement('button');
-    btn.className = 'add-btn';
-    btn.innerText = 'Add to Cart';
-    btn.onclick = () => addToCart(p.id);
-
-    // append
-    card.appendChild(img);
-    card.appendChild(meta);
-    card.appendChild(desc);
-    card.appendChild(btn);
-    productsGrid.appendChild(card);
+    card.innerHTML = `
+      <img src="${p.image}" class="prod-img" alt="${p.name}">
+      <div class="prod-name">${p.name}</div>
+      <div class="prod-desc">${p.description}</div>
+      <div class="price">₹ ${p.price}</div>
+      <button class="add-btn" onclick="addToCart('${p.id}')">Add to Cart</button>
+    `;
+    grid.appendChild(card);
   });
 }
 
-/* Add to cart logic */
-function addToCart(productId){
-  if(!cart[productId]) cart[productId] = 0;
-  cart[productId] += 1;
-  saveCart();
-  updateCartCount();
-  // small visual cue:
-  const old = document.getElementById('viewCartBtn');
-  old.style.transform = 'scale(0.98)';
-  setTimeout(()=>old.style.transform = '', 120);
+// Populate categories
+function populateCategories(){
+  const cats = [...new Set(PRODUCTS.map(p=>p.category))];
+  cats.forEach(c=>{
+    const opt = document.createElement('option');
+    opt.value=c;
+    opt.textContent=c;
+    filter.appendChild(opt);
+  });
 }
 
-/* Cart persistence */
-function saveCart(){ localStorage.setItem('wh_cart', JSON.stringify(cart)); }
-function loadCart(){ const raw = localStorage.getItem('wh_cart'); cart = raw ? JSON.parse(raw) : {}; updateCartCount(); }
+// Cart
+function addToCart(id){
+  if(!cart[id]) cart[id]=1; else cart[id]++;
+  updateCartCount();
+}
 
-/* Cart count */
 function updateCartCount(){
-  const totalQty = Object.values(cart).reduce((s,n)=>s+n,0);
-  cartCount.innerText = totalQty;
+  const total = Object.values(cart).reduce((a,b)=>a+b,0);
+  document.getElementById('cartCount').innerText=total;
 }
 
-/* Cart modal */
+// View Cart
 const cartModal = document.getElementById('cartModal');
-const cartList = document.getElementById('cartList');
-const cartTotalEl = document.getElementById('cartTotal');
+const viewCartBtn = document.getElementById('viewCartBtn');
+const closeCartBtn = document.getElementById('closeCartBtn');
+const cartItemsDiv = document.getElementById('cartItems');
 
-function openCart(){
-  renderCartList();
-  cartModal.classList.add('open');
-  cartModal.setAttribute('aria-hidden', 'false');
-}
-function closeCart(){
-  cartModal.classList.remove('open');
-  cartModal.setAttribute('aria-hidden', 'true');
-  document.getElementById('orderFormWrap').style.display = 'none';
-}
+viewCartBtn.onclick = ()=>{
+  cartModal.style.display='flex';
+  renderCartItems();
+};
+closeCartBtn.onclick = ()=>{cartModal.style.display='none';};
 
-/* Render cart list */
-function renderCartList(){
-  cartList.innerHTML = '';
-  const ids = Object.keys(cart);
-  if(ids.length === 0){
-    cartList.innerHTML = '<div style="padding:10px;color:#6b7280">Your cart is empty.</div>';
-    cartTotalEl.innerText = '0';
-    return;
-  }
-  let total = 0;
-  ids.forEach(id=>{
-    const qty = cart[id];
-    const product = PRODUCTS.find(p=>p.id===id);
-    if(!product) return;
-    const row = document.createElement('div');
-    row.className = 'cart-item';
-    const img = document.createElement('img');
-    img.src = product.image;
-    img.onerror = () => { img.src = 'https://via.placeholder.com/200x200?text=No+Image'; };
-
-    const right = document.createElement('div');
-    right.className = 'right';
-    right.innerHTML = `<div style="font-weight:700">${product.name} <small style="color:#6b7280">(${product.id})</small></div>
-                       <div style="font-size:0.9rem;color:#6b7280;margin-top:4px;">₹ ${product.price} x ${qty} = ₹ ${product.price * qty}</div>`;
-
-    const controls = document.createElement('div');
-    controls.style.display = 'flex';
-    controls.style.gap = '6px';
-    controls.style.alignItems = 'center';
-
-    const minus = document.createElement('button');
-    minus.className = 'btn secondary';
-    minus.innerText = '-';
-    minus.onclick = () => { changeQty(id, -1); };
-
-    const plus = document.createElement('button');
-    plus.className = 'btn secondary';
-    plus.innerText = '+';
-    plus.onclick = () => { changeQty(id, +1); };
-
-    const remove = document.createElement('button');
-    remove.className = 'btn secondary';
-    remove.innerText = 'Remove';
-    remove.onclick = () => { removeFromCart(id); };
-
-    controls.appendChild(minus);
-    controls.appendChild(plus);
-    controls.appendChild(remove);
-
-    row.appendChild(img);
-    row.appendChild(right);
-    row.appendChild(controls);
-    cartList.appendChild(row);
-
-    total += product.price * qty;
-  });
-
-  cartTotalEl.innerText = total;
-}
-
-/* Change qty */
-function changeQty(id, delta){
-  if(!cart[id]) return;
-  cart[id] += delta;
-  if(cart[id] <= 0) delete cart[id];
-  saveCart();
-  renderCartList();
-  updateCartCount();
-}
-
-/* Remove item */
-function removeFromCart(id){
-  delete cart[id];
-  saveCart();
-  renderCartList();
-  updateCartCount();
-}
-
-/* ORDER FLOW: show form and then send WhatsApp */
-document.getElementById('viewCartBtn').addEventListener('click', openCart);
-document.getElementById('closeCart').addEventListener('click', closeCart);
-
-// when "Order Now" clicked, show name/mobile form
-document.getElementById('orderNowBtn').addEventListener('click', () => {
-  document.getElementById('orderFormWrap').style.display = 'block';
-  document.getElementById('customerName').focus();
-});
-
-// Submit -> build message and open WhatsApp
-document.getElementById('submitOrderBtn').addEventListener('click', () => {
-  const name = document.getElementById('customerName').value.trim();
-  const mobile = document.getElementById('customerMobile').value.trim();
-
-  if(!name || !mobile){
-    alert('कृपया अपना नाम और मोबाइल नंबर दर्ज करें। (example: 9198xxxx)');
-    return;
-  }
-
-  const items = Object.keys(cart).map(id => {
-    const p = PRODUCTS.find(x => x.id === id);
-    return `${p.id} - ${p.name} x ${cart[id]} - ₹${p.price * cart[id]}`;
-  });
-
-  if(items.length === 0){
-    alert('Cart empty!');
-    return;
-  }
-
-  const total = Object.keys(cart).reduce((s,id)=>{
+function renderCartItems(){
+  cartItemsDiv.innerHTML='';
+  let totalPrice=0;
+  Object.keys(cart).forEach(id=>{
     const p = PRODUCTS.find(x=>x.id===id);
-    return s + (p.price * cart[id]);
-  }, 0);
+    const qty = cart[id];
+    totalPrice += p.price * qty;
 
-  // Build message (readable format)
-  const messageLines = [
-    `New Order from ${COMPANY_NAME}`,
-    `Name: ${name}`,
-    `Mobile: ${mobile}`,
-    `---------------------`,
-    `Items:`,
-    ...items,
-    `---------------------`,
-    `Total: ₹ ${total}`,
-    `Please confirm and reply with payment/delivery details.`
-  ];
-
-  const text = encodeURIComponent(messageLines.join('\n'));
-
-  // Open WhatsApp chat with shop number and prefilled text
-  // Using wa.me format
-  const shopNumber = SHOP_WHATSAPP_NUMBER.replace(/\D/g,''); // only digits
-  const waLink = `https://wa.me/${shopNumber}?text=${text}`;
-
-  // open new tab/window
-  window.open(waLink, '_blank');
-
-  // optional: clear cart after sending (comment/uncomment as you prefer)
-  // cart = {}; saveCart(); updateCartCount(); renderCartList(); closeCart();
-});
-
-/* =========================
-   Helpers & init
-   ========================= */
-function init(){
-  // set default images if missing
-  document.getElementById('logoImg').onerror = function(){ this.style.display='none'; };
-  document.getElementById('heroImg').onerror = function(){ this.style.display='none'; };
-
-  // fill categories and products
-  populateCategories();
-  renderProducts();
-
-  // events
-  searchInput.addEventListener('input', () => renderProducts());
-  categoryFilter.addEventListener('change', () => renderProducts());
-
-  // load cart from storage
-  loadCart();
+    const div = document.createElement('div');
+    div.className='cart-item';
+    div.innerHTML=`
+      <img src="${p.image}" alt="${p.name}">
+      <div class="cart-item-info">
+        <div class="cart-item-name">${p.name}</div>
+        <div class="cart-item-price">₹ ${p.price} x ${qty} = ₹ ${p.price*qty}</div>
+      </div>
+    `;
+    cartItemsDiv.appendChild(div);
+  });
+  // Total
+  const totalDiv = document.createElement('div');
+  totalDiv.style.fontWeight='700';
+  totalDiv.style.fontSize='1rem';
+  totalDiv.style.marginTop='12px';
+  totalDiv.innerText='Total: ₹ '+Object.keys(cart).reduce((sum,id)=>{
+    const p = PRODUCTS.find(x=>x.id===id);
+    return sum + (p.price*cart[id]);
+  },0);
+  cartItemsDiv.appendChild(totalDiv);
 }
 
-init();
+// Generate PDF & Share
+const { jsPDF } = window.jspdf;
+document.getElementById('generatePDFBtn').onclick=async()=>{
+  const pdf = new jsPDF();
+  let y=10;
+  pdf.setFontSize(16);
+  pdf.text('YES FASHION HUB - Order Details',10,y); y+=10;
+  pdf.setFontSize(12);
+  pdf.text('Near Patelwadi, Pedak Road, Rajkot',10,y); y+=7;
+  pdf.text('Email: yesfashionhub@gmail.com',10,y); y+=10;
 
-/* ====== Optional: expose some functions for debugging in console ====== */
-window.__SHOP = { PRODUCTS, cart, addToCart, renderProducts, renderCartList };
+  for(const id of Object.keys(cart)){
+    const p = PRODUCTS.find(x=>x.id===id);
+    const qty = cart[id];
+    pdf.text(`${p.name} | ₹${p.price} x ${qty} = ₹${p.price*qty}`,10,y); y+=7;
+    const img = await loadImage(p.image);
+    pdf.addImage(img,'JPEG',10,y,40,40);
+    y+=45;
+    if(y>250){pdf.addPage();y=10;}
+  }
+  pdf.save('Order.pdf');
+  alert('PDF Generated! Please share on WhatsApp.');
+};
+
+function loadImage(url){
+  return new Promise((resolve)=>{
+    const img = new Image();
+    img.setAttribute('crossOrigin','anonymous');
+    img.onload=()=>resolve(canvasToDataURL(img));
+    img.src=url;
+  });
+}
+function canvasToDataURL(img){
+  const canvas = document.createElement('canvas');
+  canvas.width=img.width;
+  canvas.height=img.height;
+  const ctx=canvas.getContext('2d');
+  ctx.drawImage(img,0,0);
+  return canvas.toDataURL('image/jpeg');
+}
+
+// Events
+filter.addEventListener('change',renderProducts);
+search.addEventListener('input',renderProducts);
+
+// Initialize
+loadProducts();
 </script>
 
 </body>
