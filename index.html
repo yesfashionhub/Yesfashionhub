@@ -96,14 +96,15 @@ async function loadProducts(){
   const text = await res.text();
   const data = JSON.parse(text.substr(47).slice(0,-2));
   const rows = data.table.rows;
-  PRODUCTS = rows.map(r=>({
-    id: r.c[0]?.v,
-    name: r.c[1]?.v,
-    category: r.c[2]?.v,
-    image: r.c[3]?.v ? r.c[3].v : DRIVE_FOLDER+'placeholder.jpg',
-    description: r.c[4]?.v,
-    price: r.c[5]?.v
-  }));
+ PRODUCTS = rows.map(r=>({
+  id: 'P'+(rows.indexOf(r)+1).toString().padStart(3,'0'), // Auto ID
+  category: r.c[1]?.v || '',
+  name: r.c[2]?.v || '',
+  description: r.c[3]?.v || '',
+  image: r.c[4]?.v ? r.c[4].v : 'images/placeholder.jpg',
+  size: r.c[5]?.v || '',
+  price: r.c[6]?.v || 0
+}));
   renderProducts();
   populateCategories();
 }
