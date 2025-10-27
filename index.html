@@ -72,29 +72,29 @@
         });
 
         // Helper: convert Google Drive open?id=... to direct view URL
-       function formatDriveImage(url) {
+      function formatDriveImage(url) {
   if (!url) return '';
-
-  // Agar comma se multiple links diye hain
+  // multiple links? use first
   if (url.includes(',')) url = url.split(',')[0].trim();
 
-  // Case 1: open?id= format
+  // handle open?id= format
   if (url.includes('drive.google.com/open?id=')) {
     const id = url.split('id=')[1].split('&')[0];
     return `https://drive.google.com/uc?export=view&id=${id}`;
   }
 
-  // Case 2: file/d/.../view format
+  // handle file/d/ format
   if (url.includes('drive.google.com/file/d/')) {
-    const id = url.split('/file/d/')[1].split('/')[0];
+    const id = url.split('/d/')[1].split('/')[0];
     return `https://drive.google.com/uc?export=view&id=${id}`;
   }
 
-  // Already converted
+  // already correct
   if (url.includes('drive.google.com/uc?export=view')) return url;
 
   return url;
 }
+
 
 
         useEffect(()=> {
