@@ -69,34 +69,7 @@
         const [cartOpen, setCartOpen] = useState(false);
         const [cart, setCart] = useState(()=> {
           try { return JSON.parse(localStorage.getItem('yf_cart')||'[]') } catch(e){ return [] }
-        });
-
-        // Helper: convert Google Drive open?id=... to direct view URL
-      function formatDriveImage(url) {
-  if (!url) return '';
-  // multiple links? use first
-  if (url.includes(',')) url = url.split(',')[0].trim();
-
-  // handle open?id= format
-  if (url.includes('drive.google.com/open?id=')) {
-    const id = url.split('id=')[1].split('&')[0];
-    return `https://drive.google.com/uc?export=view&id=${id}`;
-  }
-
-  // handle file/d/ format
-  if (url.includes('drive.google.com/file/d/')) {
-    const id = url.split('/d/')[1].split('/')[0];
-    return `https://drive.google.com/uc?export=view&id=${id}`;
-  }
-
-  // already correct
-  if (url.includes('drive.google.com/uc?export=view')) return url;
-
-  return url;
-}
-
-
-
+        })
         useEffect(()=> {
           fetchSheet().then(rows => {
             // Normalize field names and convert image links
