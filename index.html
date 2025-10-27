@@ -71,22 +71,41 @@
           try { return JSON.parse(localStorage.getItem('yf_cart')||'[]') } catch(e){ return [] }
         });
 
+        // Helper: convert Google Drive open?id=... to direct view URL
+        function formatDriveImage(url) {
+          if (!url) return '';
+          // If multiple links in same cell, take first
+          if (typeof url === 'string' && url.includes(',')) url = url.split(',')[0].trim();
+          // If link contains the file id pattern typical to Drive, extract it
+          // Accept formats: open?id=FILEID or /d/FILEID/
+          const openMatch = String(url).match(/id=([A-Za-z0-9_-]{10,})/);
+          const dMatch = String(url).match(/\/d\/([A-Za-z0-9_-]{10,})/);
+          const fallbackId = (openMatch && openMatch[1]) || (dMatch && dMatch[1]);
+          if (fallbackId) return `https://drive.google.com/uc?export=view&id=${fallbackId}`;
+          // If already a uc? link or a direct image link, return as-is
+          if (String(url).includes('drive.google.com/uc?') || /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(url)) return url;
+          // Otherwise return original (may not load)
+          return url;
+        }
+
         useEffect(()=> {
           fetchSheet().then(rows => {
-            // Normalize field names (lowercase keys)
+            // Normalize field names and convert image links
             const normalized = rows.map(r => {
+              const rawImageCell = r['Pimage'] || r['pimage'] || r['Pimage '] || r['pimage url'] || '';
+              const formattedImage = formatDriveImage(rawImageCell);
               return {
                 category: r['Category'] || r['categories'] || r['CATEGORY'] || r['category'] || '',
                 pname: r['Pname'] || r['pname'] || r['Product name'] || r['PName'] || '',
                 pdesc: r['Pdesc'] || r['pdesc'] || r['Pdesc '] || r['Pdesc'] || '',
                 psize: r['Psize'] || r['psize'] || r['size'] || '',
                 prate: r['Prate'] || r['prate'] || r['Price'] || r['prate '] || '',
-                pimage: r['Pimage'] || r['pimage'] || r['Pimage '] || r['pimage url'] || ''
+                pimage: formattedImage // store formatted image url here
               };
             });
             setData(normalized);
             setFiltered(normalized);
-            const cats = Array.from(new Set(normalized.map(x => x.category || 'Uncategorized')));
+            const cats = Array.from(new Set(normalized.map(x => (x.category && x.category.trim()) ? x.category.trim() : 'Uncategorized')));
             setCategories(['All',...cats]);
           }).catch(err => {
             console.error('Error fetching sheet', err);
@@ -108,11 +127,13 @@
         },[data,q,cat]);
 
         function addToCart(item){
-          const exist = cart.find(c => c.pname === item.pname && c.pimage === item.pimage);
+          // store item with formatted pimage (already formatted from fetch)
+          const formatted = { ...item };
+          const exist = cart.find(c => c.pname === formatted.pname && c.pimage === formatted.pimage);
           if (exist) {
             setCart(cart.map(c => c === exist ? {...c, qty: c.qty + 1} : c));
           } else {
-            setCart([...cart, {...item, qty:1}]);
+            setCart([...cart, {...formatted, qty:1}]);
           }
         }
         function removeFromCart(item){
@@ -134,7 +155,8 @@
             // try add image (if cross-origin blocked, skip)
             if (item.pimage) {
               try {
-                const resp = await fetch(item.pimage);
+                const imgUrl = item.pimage;
+                const resp = await fetch(imgUrl);
                 const blob = await resp.blob();
                 const reader = new FileReader();
                 const dataUrl = await new Promise((res, rej) => {
@@ -203,7 +225,7 @@
             React.createElement('div',{className:'grid'},
               filtered.map((p,idx)=>
                 React.createElement('div',{className:'card',key:idx},
-                  React.createElement('img',{src:p.pimage || 'https://via.placeholder.com/400x300?text=No+Image', alt:p.pname}),
+                  React.createElement('img',{src: p.pimage || 'https://via.placeholder.com/400x300?text=No+Image', alt: p.pname}),
                   React.createElement('h3',null,p.pname || 'Unnamed'),
                   React.createElement('p',null,p.pdesc || ''),
                   React.createElement('p',null,'Size: ' + (p.psize || '-')),
