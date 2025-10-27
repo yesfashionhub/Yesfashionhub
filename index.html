@@ -108,6 +108,25 @@
           setFiltered(out);
         },[data,q,cat]);
 
+        function formatDriveImage(url) {
+  if (!url) return '';
+  if (url.includes(',')) url = url.split(',')[0].trim();
+  if (url.includes('drive.google.com/open?id=')) {
+    const id = url.split('id=')[1].split('&')[0];
+    return `https://drive.google.com/uc?export=view&id=${id}`;
+  }
+  if (url.includes('drive.google.com/file/d/')) {
+    const id = url.split('/d/')[1].split('/')[0];
+    return `https://drive.google.com/uc?export=view&id=${id}`;
+  }
+  if (url.includes('drive.google.com/uc?export=view')) return url;
+  return url;
+}
+
+
+
+
+        
         function addToCart(item){
           // store item with formatted pimage (already formatted from fetch)
           const formatted = { ...item };
