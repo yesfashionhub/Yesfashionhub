@@ -72,21 +72,30 @@
         });
 
         // Helper: convert Google Drive open?id=... to direct view URL
-        function formatDriveImage(url) {
-          if (!url) return '';
-          // If multiple links in same cell, take first
-          if (typeof url === 'string' && url.includes(',')) url = url.split(',')[0].trim();
-          // If link contains the file id pattern typical to Drive, extract it
-          // Accept formats: open?id=FILEID or /d/FILEID/
-          const openMatch = String(url).match(/id=([A-Za-z0-9_-]{10,})/);
-          const dMatch = String(url).match(/\/d\/([A-Za-z0-9_-]{10,})/);
-          const fallbackId = (openMatch && openMatch[1]) || (dMatch && dMatch[1]);
-          if (fallbackId) return `https://drive.google.com/uc?export=view&id=${fallbackId}`;
-          // If already a uc? link or a direct image link, return as-is
-          if (String(url).includes('drive.google.com/uc?') || /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(url)) return url;
-          // Otherwise return original (may not load)
-          return url;
-        }
+       function formatDriveImage(url) {
+  if (!url) return '';
+
+  // Agar comma se multiple links diye hain
+  if (url.includes(',')) url = url.split(',')[0].trim();
+
+  // Case 1: open?id= format
+  if (url.includes('drive.google.com/open?id=')) {
+    const id = url.split('id=')[1].split('&')[0];
+    return `https://drive.google.com/uc?export=view&id=${id}`;
+  }
+
+  // Case 2: file/d/.../view format
+  if (url.includes('drive.google.com/file/d/')) {
+    const id = url.split('/file/d/')[1].split('/')[0];
+    return `https://drive.google.com/uc?export=view&id=${id}`;
+  }
+
+  // Already converted
+  if (url.includes('drive.google.com/uc?export=view')) return url;
+
+  return url;
+}
+
 
         useEffect(()=> {
           fetchSheet().then(rows => {
