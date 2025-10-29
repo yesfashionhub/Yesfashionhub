@@ -42,203 +42,159 @@
 
     <!-- jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- Include jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    <script>
-    (async function(){
-      // ====== CONFIG - change only APPS_SCRIPT_UPLOAD_URL to your deployed Web App URL ======
-      const APPS_SCRIPT_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbxENH68uAePu7ORZJawjjXVqvTJfXB8gpBVNfizrdOmyURo8vu4edhr7h9BDc1SdSxlEg/exec'; // <-- replace with Apps Script Web App URL from deploy
-      const WHATSAPP_NUMBER = '919978653852'; // your number with country code, no plus sign
-      // ====================================================================================
+<script>
+(async function () {
+  // CONFIG - change APPS_SCRIPT_WEBAPP_URL to your deployed Apps Script web app URL
+  const APPS_SCRIPT_WEBAPP_URL = 'PASTE_YOUR_APPS_SCRIPT_WEBAPP_URL_HERE'; // e.g. https://script.google.com/macros/s/XXXX/exec
+  const WHATSAPP_NUMBER = '919978653852'; // your number with country code
 
-      // Sample cart source: use your actual product list source (here we read from localStorage 'yf_cart')
-      const cart = (() => {
-        try { return JSON.parse(localStorage.getItem('yf_cart') || '[]') } catch(e){ return [] }
-      })();
+  // Replace this with your actual cart data source (your site already has cart)
+  // Example format used: [{pname, pdesc, psize, prate, pimage, qty}, ...]
+  function getCart() {
+    try { return JSON.parse(localStorage.getItem('yf_cart') || '[]'); }
+    catch(e) { return []; }
+  }
 
-      // render cart
-      const itemsDiv = document.getElementById('items');
-      const totalDiv = document.getElementById('total');
-      function renderCart() {
-        itemsDiv.innerHTML = '';
-        let total=0;
-        if (!cart || cart.length === 0) {
-          itemsDiv.innerHTML = '<div style="padding:10px;color:#666">Your cart is empty</div>';
-          totalDiv.innerText = '';
-          return;
-        }
-        cart.forEach((it, idx) => {
-          total += Number(it.prate || it.prate==='' ? (Number(it.prate)||Number(it.price)||0) : 0) || Number(it.price||it.prate||0);
-          const row = document.createElement('div');
-          row.className = 'item';
-          row.innerHTML = `
-            <img src="${escapeHtml(formatImage(it.pimage||it.image||it.Pimage||''))}" />
-            <div>
-              <div style="font-weight:700">${escapeHtml(it.pname||it.name||'Unnamed')}</div>
-              <div style="color:#555">${escapeHtml(it.pdesc||it.desc||'')}</div>
-              <div style="color:#777;font-size:13px">Size: ${escapeHtml(it.psize||it.size||'-')}</div>
-            </div>
-            <div class="right">₹ ${Number(it.prate||it.price||0).toFixed(2)}</div>
-          `;
-          itemsDiv.appendChild(row);
-        });
-        totalDiv.innerText = 'Total: ₹' + Number(total).toFixed(2);
-      }
-      function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
-
-      function formatImage(url){
-        if(!url) return '';
-        // If it's drive "open?id=" convert to uc?export=view
-        if (url.includes('drive.google.com/open?id=')) {
-          const id = url.split('id=')[1].split('&')[0];
-          return `https://drive.google.com/uc?export=view&id=${id}`;
-        }
-        if (url.includes('drive.google.com/file/d/')) {
-          const id = url.split('/d/')[1].split('/')[0];
-          return `https://drive.google.com/uc?export=view&id=${id}`;
-        }
-        // already fine or raw github / http
-        return url;
-      }
-
-      renderCart();
-
-      // helper: add image to PDF — fetch image as blob -> dataURL
-      async function fetchImageDataURL(url) {
-        if (!url) return null;
-        try {
-          const resp = await fetch(url, {mode:'cors'});
-          if (!resp.ok) throw 'HTTP ' + resp.status;
-          const blob = await resp.blob();
-          return await new Promise((res, rej) => {
-            const fr = new FileReader();
-            fr.onload = ()=>res(fr.result);
-            fr.onerror = rej;
-            fr.readAsDataURL(blob);
-          });
-        } catch (err) {
-          console.warn('Image fetch failed', url, err);
-          return null;
-        }
-      }
-
-      // Build PDF (thumbnails) and return blob
-      async function buildPdfBlob(customerName, customerAddress) {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({unit:'pt', format:'a4'});
-        const startX = 40;
-        let y = 40;
-        doc.setFontSize(18);
-        doc.text('Yes Fashion Hub - Order', startX, y);
-        doc.setFontSize(12);
-        y += 20;
-        doc.text(`Customer: ${customerName}`, startX, y); y += 16;
-        doc.text(`Address: ${customerAddress}`, startX, y); y += 20;
-
-        let total = 0;
-        for (const it of cart) {
-          const price = Number(it.prate || it.price || 0);
-          total += price * (it.qty || 1);
-
-          // image thumbnail (try)
-          const imgUrl = formatImage(it.pimage || it.image || '');
-          const dataUrl = imgUrl ? await fetchImageDataURL(imgUrl) : null;
-          if (dataUrl) {
-            try { doc.addImage(dataUrl, 'JPEG', startX, y, 60, 60); } catch(e){ console.warn('addImage fail', e); }
-          }
-
-          // product text
-          const leftTextX = startX + 70;
-          doc.setFontSize(12);
-          doc.text(String(it.pname || it.name || ''), leftTextX, y + 16);
-          if (it.pdesc) doc.setFontSize(10), doc.text(String(it.pdesc), leftTextX, y + 32);
-          doc.setFontSize(10);
-          doc.text(`Size: ${it.psize || it.size || '-'} | ₹${price} x ${it.qty||1}`, leftTextX, y + 48);
-          y += 80;
-          if (y > 720) { doc.addPage(); y = 40; }
-        }
-
-        doc.setFontSize(13);
-        doc.text(`Total: ₹${Number(total).toFixed(2)}`, startX, y + 20);
-
-        // return blob
-        const dataUri = doc.output('datauristring');
-        const parts = dataUri.split(',');
-        const mime = parts[0].match(/:(.*?);/)[1];
-        const b64 = parts[1];
-        const bytes = atob(b64);
-        const u8 = new Uint8Array(bytes.length);
-        for (let i=0;i<bytes.length;i++) u8[i] = bytes.charCodeAt(i);
-        return new Blob([u8], { type: mime });
-      }
-
-      // upload blob base64 to Apps Script
-      async function uploadPdfToAppsScript(filename, blob) {
-        const reader = new FileReader();
-        const promise = new Promise((res, rej) => {
-          reader.onload = ()=>res(reader.result);
-          reader.onerror = rej;
-        });
-        reader.readAsDataURL(blob);
-        const dataUrl = await promise; // data:<mime>;base64,<b64>
-        const base64 = dataUrl.split(',')[1];
-
-        // POST
-        const payload = { filename: filename, contentBase64: base64 };
-        const resp = await fetch(APPS_SCRIPT_UPLOAD_URL, {
-          method: 'POST',
-          headers: { 'Content-Type':'application/json' },
-          body: JSON.stringify(payload)
-        });
-        return await resp.json();
-      }
-
-      // UI handlers
-      document.getElementById('confirmBtn').addEventListener('click', async function(){
-        const name = document.getElementById('custName').value.trim();
-        const address = document.getElementById('custAddress').value.trim();
-        if (!name || !address) { alert('Please enter name and address'); return; }
-        if (!cart || cart.length === 0) { alert('Cart empty'); return; }
-
-        // show loader
-        document.getElementById('loader').style.display = 'flex';
-
-        try {
-          const safeName = name.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_\-]/g,'');
-          const datePart = (new Date()).toISOString().slice(0,10);
-          const filename = `${safeName}_${datePart}.pdf`;
-
-          const pdfBlob = await buildPdfBlob(name, address);
-
-          // upload to Apps Script (which will save into your Drive Orders folder)
-          const uploadResult = await uploadPdfToAppsScript(filename, pdfBlob);
-
-          // hide loader
-          document.getElementById('loader').style.display = 'none';
-
-          if (uploadResult && uploadResult.success && uploadResult.url) {
-            const pdfLink = uploadResult.url; // shareable Drive link (viewer)
-            const message = `My Name is ${name}%0AAddress: ${address}%0A%0APlease find my Order PDF and confirm my order soon as possible.%0A${pdfLink}`;
-            // open WhatsApp
-            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
-            alert('Order uploaded & WhatsApp opened (click the link to view the PDF).');
-            // optional: keep cart or clear as you want
-          } else {
-            console.error('Upload failed', uploadResult);
-            alert('Upload failed. See console for details.');
-          }
-        } catch (err) {
-          document.getElementById('loader').style.display = 'none';
-          console.error(err);
-          alert('Error creating/uploading PDF. Check console.');
-        }
+  // Convert an image URL to dataURL (base64)
+  async function imageUrlToDataUrl(url) {
+    if (!url) return null;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const blob = await res.blob();
+      return await new Promise((res2, rej) => {
+        const fr = new FileReader();
+        fr.onload = () => res2(fr.result);
+        fr.onerror = rej;
+        fr.readAsDataURL(blob);
       });
+    } catch (err) {
+      console.warn('image fetch error', url, err);
+      return null;
+    }
+  }
 
-      document.getElementById('clearBtn').addEventListener('click', function(){
-        localStorage.removeItem('yf_cart');
-        location.reload();
-      });
+  // Build PDF (returns blob)
+  async function buildPdfBlob(customerName, customerAddress) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const startX = 40;
+    let y = 40;
+    const cart = getCart();
+    doc.setFontSize(18);
+    doc.text('Yes Fashion Hub - Order', startX, y);
+    y += 24;
+    doc.setFontSize(12);
+    doc.text(`Customer: ${customerName}`, startX, y); y += 16;
+    doc.text(`Address: ${customerAddress}`, startX, y); y += 20;
 
-    })();
-    </script>
-  </body>
+    let total = 0;
+    for (const it of cart) {
+      const price = Number(it.prate || it.price || 0);
+      const qty = Number(it.qty || 1);
+      total += price * qty;
+
+      // try to fetch image and add as thumbnail
+      const imgUrl = it.pimage || it.image || it.Pimage || '';
+      let dataUrl = null;
+      if (imgUrl) dataUrl = await imageUrlToDataUrl(imgUrl);
+
+      if (dataUrl) {
+        try { doc.addImage(dataUrl, 'JPEG', startX, y, 60, 60); } catch(e){ console.warn('pdf addImage fail', e); }
+      }
+      const leftTextX = startX + 70;
+      doc.setFontSize(12);
+      doc.text(String(it.pname || it.name || ''), leftTextX, y + 16);
+      if (it.pdesc) doc.setFontSize(10), doc.text(String(it.pdesc || ''), leftTextX, y + 34);
+      doc.setFontSize(10);
+      doc.text(`Size: ${it.psize || it.size || '-'} | ₹${price} x ${qty}`, leftTextX, y + 52);
+      y += 80;
+      if (y > 720) { doc.addPage(); y = 40; }
+    }
+
+    doc.setFontSize(13);
+    doc.text(`Total: ₹${Number(total).toFixed(2)}`, startX, y + 10);
+
+    // return blob
+    return doc.output('blob');
+  }
+
+  // Convert blob -> base64 string
+  function blobToBase64(blob) {
+    return new Promise((res, rej) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result; // data:application/pdf;base64,AAA...
+        res(dataUrl.split(',')[1]); // return only base64 part
+      };
+      reader.onerror = rej;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  // Upload to Apps Script
+  async function uploadPdf(filename, base64Content) {
+    const payload = { filename: filename, contentBase64: base64Content };
+    const resp = await fetch(APPS_SCRIPT_WEBAPP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    return resp.json();
+  }
+
+  // UI: Hook to a confirm button on your page
+  // Example: <button id="confirmOrderBtn">Confirm Order</button>
+  const btn = document.getElementById('confirmOrderBtn');
+  if (!btn) {
+    console.warn('No #confirmOrderBtn found — create button with id confirmOrderBtn to enable order flow.');
+    return;
+  }
+
+  btn.addEventListener('click', async function () {
+    try {
+      const cname = prompt('Enter your name:');
+      const caddr = prompt('Enter your address:');
+      if (!cname || !caddr) { alert('Name & address required'); return; }
+
+      btn.disabled = true;
+      btn.innerText = 'Processing...';
+
+      const now = new Date();
+      const datePart = now.toISOString().slice(0,10);
+      const safeName = cname.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_\-]/g,'');
+      const filename = `${safeName}_${datePart}.pdf`;
+
+      const pdfBlob = await buildPdfBlob(cname, caddr);
+      const base64 = await blobToBase64(pdfBlob);
+
+      const result = await uploadPdf(filename, base64);
+      btn.disabled = false;
+      btn.innerText = 'Confirm Order';
+
+      if (result && result.success && result.url) {
+        const pdfLink = result.url;
+        const message = `My Name is ${cname}%0AAddress: ${caddr}%0A%0APlease find my Order PDF and confirm my order soon as possible.%0A${pdfLink}`;
+        const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+        window.open(waUrl, '_blank');
+        alert('Order uploaded & WhatsApp opened. PDF link: ' + pdfLink);
+      } else {
+        console.error('Upload failed', result);
+        alert('Upload failed: ' + (result && result.error ? result.error : 'unknown'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error creating or uploading PDF. Check console.');
+      btn.disabled = false;
+      btn.innerText = 'Confirm Order';
+    }
+  });
+
+})(); // end IIFE
+</script>
+
+ </body>
 </html>
