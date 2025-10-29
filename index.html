@@ -59,6 +59,9 @@
       // *** CONFIG - only change if needed ***
       const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxENH68uAePu7ORZJawjjXVqvTJfXB8gpBVNfizrdOmyURo8vu4edhr7h9BDc1SdSxlEg/exec';
       const WHATSAPP_NUMBER_WITHOUT_PLUS = '919978653852'; // country code+number for wa.me (91 + 9978653852)
+
+      const DRIVE_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbzQFujhLNbFusQfPxsHgQfoXAwcQz-caWSs0JAZDR9VdqEWY_PdKNIDi6ELvFQK03LG/exec'; // replace with your actual web app URL
+
       // ***************************************
 
       // fetch sheet JSON (your Apps Script doGet returns { data: [...] })
@@ -103,6 +106,8 @@
         // fallback - return original
         return val;
       }
+
+      
 
       // App component
       function App(){
@@ -179,6 +184,86 @@
         function removeFromCart(item){
           setCart(cart.filter(c => c !== item));
         }
+
+        async function confirmFinalOrder() {
+  if (cart.length === 0) {
+    alert('Cart empty');
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  let y = 40;
+  doc.setFontSize(16);
+  doc.text('Yes Fashion Hub - Order Summary', 40, y);
+  y += 30;
+
+  // --- Table layout ---
+  for (const item of cart) {
+    // fetch image
+    let dataUrl = null;
+    if (item.pimage) {
+      try {
+        const resp = await fetch(item.pimage);
+        const blob = await resp.blob();
+        dataUrl = await new Promise((res, rej) => {
+          const reader = new FileReader();
+          reader.onload = () => res(reader.result);
+          reader.onerror = rej;
+          reader.readAsDataURL(blob);
+        });
+      } catch (e) {
+        console.warn('Image error', e);
+      }
+    }
+
+    if (dataUrl) doc.addImage(dataUrl, 'JPEG', 40, y, 80, 80);
+    doc.setFontSize(12);
+    doc.text(`${item.pname}`, 140, y + 20);
+    doc.text(`${item.pdesc}`, 140, y + 40);
+    doc.text(`Size: ${item.psize} | Rate: ₹${item.prate} | Qty: ${item.qty}`, 140, y + 60);
+    y += 100;
+    if (y > 750) { doc.addPage(); y = 40; }
+  }
+
+  const total = cart.reduce((s,i)=> s + (Number(i.prate || 0) * Number(i.qty || 1)), 0);
+  doc.setFontSize(14);
+  doc.text(`Total Amount: ₹${total}`, 40, y + 20);
+
+  // --- Convert PDF to Base64 ---
+  const pdfBlob = doc.output('blob');
+  const base64 = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(pdfBlob);
+  });
+
+  // --- Upload to Drive ---
+  const filename = `Order_${Date.now()}.pdf`;
+  const res = await fetch(DRIVE_UPLOAD_URL, {
+    method: 'POST',
+    body: new URLSearchParams({ file: base64, filename })
+  });
+  const json = await res.json();
+
+  if (!json.success) {
+    alert('Upload failed: ' + json.error);
+    return;
+  }
+
+  // --- WhatsApp message ---
+  const link = json.link;
+  let msg = `🛍️ *Yes Fashion Hub - New Order*%0A%0A`;
+  cart.forEach((c, i) => {
+    msg += `${i+1}. ${encodeURIComponent(c.pname)} | Qty: ${c.qty} | ₹${c.prate}%0A`;
+  });
+  msg += `%0A*Total:* ₹${total}%0A📄 Order PDF: ${link}%0A%0AThank you!`;
+
+  window.open(`https://wa.me/${WHATSAPP_NUMBER_WITHOUT_PLUS}?text=${msg}`, '_blank');
+  alert('Order uploaded & link ready for WhatsApp!');
+}
+
 
         // PDF generation - embed images (uses fetch -> blob -> dataURL)
         async function generatePDFAndDownload() {
@@ -295,11 +380,8 @@
               React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
                 React.createElement('h3', null, 'Your Cart'),
                 React.createElement('div', null,
-                  React.createElement('button',{className:'btn', onClick:generatePDFAndDownload}, 'Download PDF'),
-                  ' ',
-                  React.createElement('button',{className:'btn', onClick:sendOrderToWhatsApp}, 'Send to WhatsApp'),
-                  ' ',
-                  React.createElement('button',{className:'btn', onClick:()=>setCartOpen(false)}, 'Close')
+                    React.createElement('button',{className:'btn', onClick:confirmFinalOrder}, 'Confirm Final Order'),
+                    React.createElement('button',{className:'btn', onClick:()=>setCartOpen(false)}, 'Close')
                 )
               ),
               React.createElement('div',{className:'divider'}),
