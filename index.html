@@ -222,6 +222,10 @@
     doc.text(`${item.pname}`, 140, y + 20);
     doc.text(`${item.pdesc}`, 140, y + 40);
     doc.text(`Size: ${item.psize} | Rate: ₹${item.prate} | Qty: ${item.qty}`, 140, y + 60);
+    React.createElement('div', {
+    style: { textAlign: 'right', fontWeight: 700, marginTop: 10 }
+  }, `Total: ₹${cart.reduce((s, i) => s + (Number(i.prate || 0) * Number(i.qty || 1)), 0)}`),
+
     y += 100;
     if (y > 750) { doc.addPage(); y = 40; }
   }
@@ -409,6 +413,14 @@
 
       ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
     })();
+
+      document.getElementById('confirmOrderBtn').addEventListener('click', confirmOrder);
+
+function confirmOrder() {
+  alert('Confirm Order clicked!'); // test
+  // later we’ll replace with upload-to-drive logic
+}
+
     </script>
   </body>
 </html>
