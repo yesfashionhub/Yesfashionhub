@@ -60,7 +60,8 @@
       const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxENH68uAePu7ORZJawjjXVqvTJfXB8gpBVNfizrdOmyURo8vu4edhr7h9BDc1SdSxlEg/exec';
       const WHATSAPP_NUMBER_WITHOUT_PLUS = '919978653852'; // country code+number for wa.me (91 + 9978653852)
 
-      const DRIVE_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbzQFujhLNbFusQfPxsHgQfoXAwcQz-caWSs0JAZDR9VdqEWY_PdKNIDi6ELvFQK03LG/exec'; // replace with your actual web app URL
+      // <<< Replace this with your deployed Apps Script Web App URL (Drive uploader) >>>
+      const DRIVE_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbzQFujhLNbFusQfPxsHgQfoXAwcQz-caWSs0JAZDR9VdqEWY_PdKNIDi6ELvFQK03LG/exec';
 
       // ***************************************
 
@@ -75,22 +76,13 @@
       // helpers to normalize image URLs (Github raw or Drive or already direct)
       function normalizeImageUrl(cell) {
         if (!cell) return '';
-        // If cell contains multiple URLs, pick first non-empty
         let val = String(cell);
-        // sometimes sheet values are like "url1, url2" or newline separated; keep first
         if (val.includes(',')) val = val.split(',')[0].trim();
         if (val.includes('\n')) val = val.split('\n')[0].trim();
-
-        // If it's already raw.githubusercontent link, return as-is
         if (val.includes('raw.githubusercontent.com')) return val;
-
-        // If it's a GitHub blob link, convert to raw
         if (val.includes('github.com') && val.includes('/blob/')) {
-          // convert https://github.com/user/repo/blob/main/images/file.jpg -> https://raw.githubusercontent.com/user/repo/main/images/file.jpg
           return val.replace('https://github.com/', 'https://raw.githubusercontent.com/').replace('/blob/', '/');
         }
-
-        // Google Drive patterns
         if (val.includes('drive.google.com/open?id=')) {
           const id = val.split('id=')[1].split('&')[0];
           return `https://drive.google.com/uc?export=view&id=${id}`;
@@ -99,15 +91,9 @@
           const id = val.split('/d/')[1].split('/')[0];
           return `https://drive.google.com/uc?export=view&id=${id}`;
         }
-        if (val.includes('drive.google.com/uc?export=view')) {
-          return val;
-        }
-
-        // fallback - return original
+        if (val.includes('drive.google.com/uc?export=view')) return val;
         return val;
       }
-
-      
 
       // App component
       function App(){
@@ -126,9 +112,7 @@
           let mounted = true;
           fetchSheet().then(rows => {
             if (!mounted) return;
-            // Normalize columns - support variations in header names
             const normalized = rows.map(r => {
-              // prefer Pimage / pimage / image etc
               const imageCell = r.Pimage || r.pimage || r['Pimage '] || r['pimage url'] || r.Image || r.image || '';
               return {
                 category: (r.Category || r.categories || r.category || '').toString(),
@@ -185,91 +169,119 @@
           setCart(cart.filter(c => c !== item));
         }
 
+        // Confirm Final Order: generate PDF, upload to Drive, get link, open WhatsApp
         async function confirmFinalOrder() {
-  if (cart.length === 0) {
-    alert('Cart empty');
-    return;
-  }
+          if (cart.length === 0) {
+            alert('Cart empty');
+            return;
+          }
 
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-  let y = 40;
-  doc.setFontSize(16);
-  doc.text('Yes Fashion Hub - Order Summary', 40, y);
-  y += 30;
+          try {
+            const { jsPDF } = window.jspdf;
+            // Use points (pt) for neat spacing
+            const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+            let y = 40;
+            doc.setFontSize(18);
+            doc.text('Yes Fashion Hub - Order', 40, y);
+            y += 28;
 
-  // --- Table layout ---
-  for (const item of cart) {
-    // fetch image
-    let dataUrl = null;
-    if (item.pimage) {
-      try {
-        const resp = await fetch(item.pimage);
-        const blob = await resp.blob();
-        dataUrl = await new Promise((res, rej) => {
-          const reader = new FileReader();
-          reader.onload = () => res(reader.result);
-          reader.onerror = rej;
-          reader.readAsDataURL(blob);
-        });
-      } catch (e) {
-        console.warn('Image error', e);
-      }
-    }
+            // Add a header row
+            const total = cart.reduce((s,i)=> s + (Number(i.prate || 0) * Number(i.qty || 1)), 0);
 
-    if (dataUrl) doc.addImage(dataUrl, 'JPEG', 40, y, 80, 80);
-    doc.setFontSize(12);
-    doc.text(`${item.pname}`, 140, y + 20);
-    doc.text(`${item.pdesc}`, 140, y + 40);
-    doc.text(`Size: ${item.psize} | Rate: ₹${item.prate} | Qty: ${item.qty}`, 140, y + 60);
-    React.createElement('div', {
-    style: { textAlign: 'right', fontWeight: 700, marginTop: 10 }
-  }, `Total: ₹${cart.reduce((s, i) => s + (Number(i.prate || 0) * Number(i.qty || 1)), 0)}`),
+            // For each item, add image (if available) + text
+            for (const item of cart) {
+              // try to fetch image and convert to dataURL
+              let dataUrl = null;
+              if (item.pimage) {
+                try {
+                  const resp = await fetch(item.pimage, { mode: 'cors' });
+                  if (resp.ok) {
+                    const blob = await resp.blob();
+                    dataUrl = await new Promise((res, rej) => {
+                      const reader = new FileReader();
+                      reader.onload = () => res(reader.result);
+                      reader.onerror = rej;
+                      reader.readAsDataURL(blob);
+                    });
+                  }
+                } catch (err) {
+                  console.warn('Image load failed', err);
+                }
+              }
 
-    y += 100;
-    if (y > 750) { doc.addPage(); y = 40; }
-  }
+              // Draw image thumbnail if available
+              if (dataUrl) {
+                try {
+                  doc.addImage(dataUrl, 'JPEG', 40, y, 90, 90);
+                } catch (e) {
+                  // some dataURLs might be PNG; try PNG if JPEG fails
+                  try { doc.addImage(dataUrl, 'PNG', 40, y, 90, 90); } catch (e2) { /* ignore */ }
+                }
+              }
 
-  const total = cart.reduce((s,i)=> s + (Number(i.prate || 0) * Number(i.qty || 1)), 0);
-  doc.setFontSize(14);
-  doc.text(`Total Amount: ₹${total}`, 40, y + 20);
+              // Text details to the right of image
+              const leftTextX = 140;
+              doc.setFontSize(12);
+              doc.text(String(item.pname || ''), leftTextX, y + 18);
+              if (item.pdesc) doc.setFontSize(10), doc.text(String(item.pdesc || ''), leftTextX, y + 36);
+              doc.setFontSize(10);
+              doc.text(`Size: ${item.psize || '-'} | ₹${item.prate || '0'} x ${item.qty}`, leftTextX, y + 56);
 
-  // --- Convert PDF to Base64 ---
-  const pdfBlob = doc.output('blob');
-  const base64 = await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result.split(',')[1]);
-    reader.onerror = reject;
-    reader.readAsDataURL(pdfBlob);
-  });
+              y += 110;
+              if (y > 720) { doc.addPage(); y = 40; }
+            }
 
-  // --- Upload to Drive ---
-  const filename = `Order_${Date.now()}.pdf`;
-  const res = await fetch(DRIVE_UPLOAD_URL, {
-    method: 'POST',
-    body: new URLSearchParams({ file: base64, filename })
-  });
-  const json = await res.json();
+            // Total
+            doc.setFontSize(14);
+            doc.text(`Total Amount: ₹${total}`, 40, y + 4);
 
-  if (!json.success) {
-    alert('Upload failed: ' + json.error);
-    return;
-  }
+            // Convert PDF to base64
+            const pdfBlob = doc.output('blob');
+            const base64 = await new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result.split(',')[1]);
+              reader.onerror = reject;
+              reader.readAsDataURL(pdfBlob);
+            });
 
-  // --- WhatsApp message ---
-  const link = json.link;
-  let msg = `🛍️ *Yes Fashion Hub - New Order*%0A%0A`;
-  cart.forEach((c, i) => {
-    msg += `${i+1}. ${encodeURIComponent(c.pname)} | Qty: ${c.qty} | ₹${c.prate}%0A`;
-  });
-  msg += `%0A*Total:* ₹${total}%0A📄 Order PDF: ${link}%0A%0AThank you!`;
+            // Upload to Drive via Apps Script web app
+            const filename = `Order_${Date.now()}.pdf`;
+            const res = await fetch(DRIVE_UPLOAD_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: new URLSearchParams({ file: base64, filename })
+            });
 
-  window.open(`https://wa.me/${WHATSAPP_NUMBER_WITHOUT_PLUS}?text=${msg}`, '_blank');
-  alert('Order uploaded & link ready for WhatsApp!');
-}
+            const json = await res.json();
+            if (!json || !json.success) {
+              console.error('Upload failed response:', json);
+              alert('Upload failed. Check console for details.');
+              return;
+            }
 
+            const link = json.link;
+            // Build WhatsApp message (encoded)
+            let msgPlain = `🛍️ Yes Fashion Hub - New Order\n\n`;
+            cart.forEach((c, i) => {
+              msgPlain += `${i+1}. ${c.pname} | Qty: ${c.qty} | ₹${c.prate}\n`;
+            });
+            msgPlain += `\nTotal: ₹${total}\n\nOrder PDF: ${link}\n\nPlease confirm.`;
 
-        // PDF generation - embed images (uses fetch -> blob -> dataURL)
+            const waUrl = `https://wa.me/${WHATSAPP_NUMBER_WITHOUT_PLUS}?text=${encodeURIComponent(msgPlain)}`;
+            window.open(waUrl, '_blank');
+            alert('Order uploaded and WhatsApp opened with link.');
+
+            // Optionally clear cart after confirm:
+            // setCart([]);
+            // setCartOpen(false);
+
+          } catch (err) {
+            console.error('confirmFinalOrder error', err);
+            alert('Error creating/uploading order. See console.');
+          }
+        }
+
+        // Keep the old download function (optional), but we no longer use it for final flow
         async function generatePDFAndDownload() {
           if (cart.length === 0) { alert('Cart empty'); return; }
           const { jsPDF } = window.jspdf;
@@ -277,15 +289,12 @@
           doc.setFontSize(16);
           doc.text('Yes Fashion Hub - Order', 40, 30);
           let y = 50;
-
           for (const item of cart) {
-            // attempt to fetch image and convert to dataURL
             if (item.pimage) {
               try {
                 const resp = await fetch(item.pimage, {mode: 'cors'});
                 if (resp.ok) {
                   const blob = await resp.blob();
-                  // read as dataURL
                   const dataUrl = await new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = () => resolve(reader.result);
@@ -293,15 +302,9 @@
                     reader.readAsDataURL(blob);
                   });
                   doc.addImage(dataUrl, 'JPEG', 40, y, 90, 90);
-                } else {
-                  // image fetch failed (CORS or 404) - ignore image
-                  console.warn('Image fetch failed', item.pimage, resp.status);
                 }
-              } catch (err) {
-                console.warn('Image fetch/convert error', err);
-              }
+              } catch (err) { console.warn('Image fetch error', err); }
             }
-
             doc.setFontSize(12);
             doc.text(`${item.pname || ''}`, 140, y + 20);
             doc.text(`${item.pdesc || ''}`, 140, y + 40);
@@ -309,33 +312,12 @@
             y += 120;
             if (y > 720) { doc.addPage(); y = 40; }
           }
-
           const total = cart.reduce((s,i)=> s + (Number(i.prate || 0) * Number(i.qty || 1)), 0);
           doc.setFontSize(14);
           doc.text(`Total: ₹${total}`, 40, y + 20);
-
           const filename = `order_${Date.now()}.pdf`;
           doc.save(filename);
-
-          alert('PDF downloaded. Open WhatsApp and attach the PDF to send the order.');
-        }
-
-        // WhatsApp - opens conversation prefilled to your number (can't attach file automatically via wa.me)
-        function sendOrderToWhatsApp() {
-          if (cart.length === 0) { alert('Cart empty'); return; }
-          let msg = `Yes Fashion Hub - Order%0A%0A`;
-          cart.forEach((c, i) => {
-            msg += `${i+1}. ${encodeURIComponent(c.pname)} | Qty: ${c.qty} | Rate: ₹${c.prate}%0A`;
-            // we include image link too for quick reference (WhatsApp will show preview if possible)
-            if (c.pimage) {
-              msg += `Image: ${encodeURIComponent(c.pimage)}%0A`;
-            }
-            msg += `%0A`;
-          });
-          const total = cart.reduce((s,i)=> s + (Number(i.prate || 0) * Number(i.qty || 1)), 0);
-          msg += `Total: ₹${total}%0A%0APlease confirm and share payment details.`;
-          const wa = `https://wa.me/${WHATSAPP_NUMBER_WITHOUT_PLUS}?text=${encodeURIComponent(msg)}`;
-          window.open(wa, '_blank');
+          alert('PDF downloaded. Use Confirm Final Order to upload to Drive + WhatsApp.');
         }
 
         // UI
@@ -385,25 +367,33 @@
                 React.createElement('h3', null, 'Your Cart'),
                 React.createElement('div', null,
                     React.createElement('button',{className:'btn', onClick:confirmFinalOrder}, 'Confirm Final Order'),
+                    ' ',
                     React.createElement('button',{className:'btn', onClick:()=>setCartOpen(false)}, 'Close')
                 )
               ),
               React.createElement('div',{className:'divider'}),
               cart.length === 0 ? React.createElement('div', null, 'Cart is empty') :
-              cart.map((c, i) =>
-                React.createElement('div',{className:'cart-row', key:i},
-                  React.createElement('img',{src:c.pimage || 'https://via.placeholder.com/80', alt:c.pname}),
-                  React.createElement('div',{style:{flex:1}},
-                    React.createElement('div',{style:{fontWeight:600}}, c.pname),
-                    React.createElement('div', null, c.pdesc),
-                    React.createElement('div', null, 'Size: ' + (c.psize || '-')),
-                    React.createElement('div', null, '₹' + (c.prate || '-') + ' x ' + c.qty)
-                  ),
-                  React.createElement('div', null,
-                    React.createElement('button',{className:'qty-btn', onClick:()=>changeQty(c,1)}, '+'),
-                    React.createElement('button',{className:'qty-btn', onClick:()=>changeQty(c,-1)}, '-'),
-                    React.createElement('button',{className:'qty-btn', onClick:()=>removeFromCart(c)}, 'Remove')
+              // Wrap items + total inside one container
+              React.createElement('div', null,
+                cart.map((c, i) =>
+                  React.createElement('div',{className:'cart-row', key:i},
+                    React.createElement('img',{src:c.pimage || 'https://via.placeholder.com/80', alt:c.pname}),
+                    React.createElement('div',{style:{flex:1}},
+                      React.createElement('div',{style:{fontWeight:600}}, c.pname),
+                      React.createElement('div', null, c.pdesc),
+                      React.createElement('div', null, 'Size: ' + (c.psize || '-')),
+                      React.createElement('div', null, '₹' + (c.prate || '-') + ' x ' + c.qty)
+                    ),
+                    React.createElement('div', null,
+                      React.createElement('button',{className:'qty-btn', onClick:()=>changeQty(c,1)}, '+'),
+                      React.createElement('button',{className:'qty-btn', onClick:()=>changeQty(c,-1)}, '-'),
+                      React.createElement('button',{className:'qty-btn', onClick:()=>removeFromCart(c)}, 'Remove')
+                    )
                   )
+                ),
+                // Total row
+                React.createElement('div', { style: { textAlign: 'right', fontWeight: 700, marginTop: 10 } },
+                  `Total: ₹${cart.reduce((s, i) => s + (Number(i.prate || 0) * Number(i.qty || 1)), 0)}`
                 )
               )
             )
@@ -413,15 +403,6 @@
 
       ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
     })();
-
-document.getElementById('confirmOrderBtn').addEventListener('click', confirmOrder);
-
-function confirmOrder() {
-  alert('Confirm Order clicked!'); // test
-  // later we’ll replace with upload-to-drive logic
-}
-
     </script>
   </body>
 </html>
-
