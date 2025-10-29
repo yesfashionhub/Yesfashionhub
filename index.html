@@ -44,21 +44,31 @@
       const SHEET_NAME = 'yesfashionhub';
 
       function fetchSheet() {
-        const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
-        return fetch(url).then(r => r.text()).then(txt => {
-          // gviz returns "/*O_o*/\ngoogle.visualization.Query.setResponse({...})"
-          const json = JSON.parse(txt.replace(/^[^{]*{/,'{').replace(/}\);?$/,'}'));
-          const cols = json.table.cols.map(c=>c.label || c.id || '');
-          const rows = json.table.rows.map(r => {
-            const obj = {};
-            r.c.forEach((cell,i) => {
-              obj[cols[i]] = cell ? cell.v : '';
-            });
-            return obj;
-          });
-          return rows;
-        });
+      const url = `https://script.google.com/macros/s/AKfycbxENH68uAePu7ORZJawjjXVqvTJfXB8gpBVNfizrdOmyURo8vu4edhr7h9BDc1SdSxlEg/exec`;
+      return fetch(url)
+      .then(r => r.json())
+      .then(data => {
+      if (!data || !data.data) {
+        throw new Error("Invalid JSON format from Apps Script");
       }
+
+      // Convert each row to product object
+      return data.data.map(r => ({
+        category: r.Categories || r.category || '',
+        pname: r.Pname || r.pname || '',
+        pdesc: r.Pdesc || r.pdesc || '',
+        psize: r.Psize || r.psize || '',
+        prate: r.Prate || r.prate || '',
+        pimage: r.Pimage || r.pimage || ''
+      }));
+      })
+      .catch(err => {
+      console.error("Error fetching sheet data:", err);
+      alert("Error fetching data from Apps Script. Check if the Web App is deployed with 'Anyone' access.");
+      return [];
+      });
+    }
+
 
       function App(){
         const [data, setData] = useState([]);
@@ -123,10 +133,6 @@
   return url;
 }
 
-
-
-
-        
         function addToCart(item){
           // store item with formatted pimage (already formatted from fetch)
           const formatted = { ...item };
