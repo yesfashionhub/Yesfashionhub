@@ -47,373 +47,286 @@
     <div id="root"></div>
 
     <!-- React -->
-    <!doctype html>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>YesFashionHub - WhatsApp Store</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <style>
-      body {
-        font-family: Inter, system-ui, Arial;
-        margin: 0;
-        background: #f5f5f7;
-      }
-      .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 16px;
-      }
-      header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 12px 0;
-      }
-      .logo {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .logo img {
-        height: 48px;
-        border-radius: 8px;
-      }
-      .search-bar {
-        display: flex;
-        gap: 8px;
-        margin: 12px 0;
-      }
-      .search-bar input,
-      .search-bar select {
-        padding: 8px;
-        border-radius: 6px;
-        border: 1px solid #ddd;
-      }
-      .slider {
-        height: 180px;
-        background: #ddd;
-        border-radius: 8px;
-        margin: 12px 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: 12px;
-      }
-      .card {
-        background: #fff;
-        border-radius: 8px;
-        padding: 10px;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-      }
-      .card img {
-        width: 100%;
-        height: 160px;
-        object-fit: cover;
-        border-radius: 6px;
-      }
-      .btn {
-        padding: 8px 10px;
-        border-radius: 6px;
-        border: none;
-        background: #0b74ff;
-        color: #fff;
-        cursor: pointer;
-      }
-      .cart-btn {
-        position: relative;
-      }
-      .cart-count {
-        position: absolute;
-        top: -6px;
-        right: -6px;
-        background: #ff3b30;
-        color: #fff;
-        padding: 4px 6px;
-        border-radius: 50%;
-        font-size: 12px;
-      }
-      .modal {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.45);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 99;
-      }
-      .modal-content {
-        background: #fff;
-        padding: 16px;
-        border-radius: 8px;
-        max-width: 800px;
-        width: 100%;
-        max-height: 90vh;
-        overflow: auto;
-      }
-      .cart-row {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        padding: 8px 0;
-        border-bottom: 1px solid #eee;
-      }
-      .cart-row img {
-        width: 80px;
-        height: 80px;
-        object-fit: cover;
-        border-radius: 6px;
-      }
-      .divider {
-        height: 1px;
-        background: #eee;
-        margin: 8px 0;
-      }
-      /* Loader */
-      .loader {
-        position: fixed;
-        inset: 0;
-        background: rgba(255, 255, 255, 0.8);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 999;
-        font-size: 20px;
-        font-weight: 600;
-        color: #0b74ff;
-      }
-      .spinner {
-        border: 4px solid #ddd;
-        border-top: 4px solid #0b74ff;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-        margin-right: 10px;
-      }
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
-    <div id="loader" class="loader" style="display:none;">
-      <div class="spinner"></div> Processing Order...
-    </div>
+    <script>
+    (function(){
+      const { useState, useEffect } = React;
 
-```
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+      // *** CONFIG - only change if needed ***
+      const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxENH68uAePu7ORZJawjjXVqvTJfXB8gpBVNfizrdOmyURo8vu4edhr7h9BDc1SdSxlEg/exec';
+      const WHATSAPP_NUMBER_WITHOUT_PLUS = '919978653852'; // country code+number for wa.me (91 + 9978653852)
+      // ***************************************
 
-<script>
-(function(){
-  const { useState, useEffect } = React;
+      // fetch sheet JSON (your Apps Script doGet returns { data: [...] })
+      async function fetchSheet() {
+        const res = await fetch(SHEET_URL);
+        const json = await res.json();
+        if (!json || !json.data) return [];
+        return json.data.map(row => ({ ...row }));
+      }
 
-  const GITHUB_USER = "yesfashionhub"; 
-  const GITHUB_REPO = "yesfashionhub.github.io";
-  const GITHUB_FOLDER = "orders";
-  const GITHUB_TOKEN = ""; 
-  const WHATSAPP_NUMBER = "919978653852"; // 📱 your WhatsApp number
+      // helpers to normalize image URLs (Github raw or Drive or already direct)
+      function normalizeImageUrl(cell) {
+        if (!cell) return '';
+        // If cell contains multiple URLs, pick first non-empty
+        let val = String(cell);
+        // sometimes sheet values are like "url1, url2" or newline separated; keep first
+        if (val.includes(',')) val = val.split(',')[0].trim();
+        if (val.includes('\n')) val = val.split('\n')[0].trim();
 
-  const SHEET_URL = "https://script.google.com/macros/s/AKfycbxENH68uAePu7ORZJawjjXVqvTJfXB8gpBVNfizrdOmyURo8vu4edhr7h9BDc1SdSxlEg/exec";
+        // If it's already raw.githubusercontent link, return as-is
+        if (val.includes('raw.githubusercontent.com')) return val;
 
-  function App(){
-    const [data,setData]=useState([]);
-    const [filtered,setFiltered]=useState([]);
-    const [categories,setCategories]=useState([]);
-    const [q,setQ]=useState('');
-    const [cat,setCat]=useState('All');
-    const [cart,setCart]=useState(()=>JSON.parse(localStorage.getItem('yf_cart')||'[]'));
-    const [cartOpen,setCartOpen]=useState(false);
-    const [userName,setUserName]=useState('');
-    const [userAddress,setUserAddress]=useState('');
-
-    useEffect(()=>{
-      fetch(SHEET_URL).then(r=>r.json()).then(d=>{
-        const rows = d.data||[];
-        const products = rows.map(r=>({
-          category:r.Categories||r.category||'',
-          pname:r.Pname||r.pname||'',
-          pdesc:r.Pdesc||r.pdesc||'',
-          psize:r.Psize||r.psize||'',
-          prate:r.Prate||r.prate||'',
-          pimage:r.Pimage||r.pimage||''
-        }));
-        setData(products);
-        setFiltered(products);
-        const cats=[...new Set(products.map(p=>p.category||'Uncategorized'))];
-        setCategories(['All',...cats]);
-      });
-    },[]);
-
-    useEffect(()=>localStorage.setItem('yf_cart',JSON.stringify(cart)),[cart]);
-
-    useEffect(()=>{
-      let out=data.filter(d=>{
-        const matchesQ=!q||d.pname.toLowerCase().includes(q.toLowerCase());
-        const matchesCat=cat==='All'||d.category===cat;
-        return matchesQ&&matchesCat;
-      });
-      setFiltered(out);
-    },[q,cat,data]);
-
-    function addToCart(p){
-      const ex=cart.find(c=>c.pname===p.pname&&c.pimage===p.pimage);
-      if(ex)setCart(cart.map(c=>c===ex?{...c,qty:c.qty+1}:c));
-      else setCart([...cart,{...p,qty:1}]);
-    }
-    function changeQty(p,delta){setCart(cart.map(c=>c===p?{...c,qty:Math.max(1,c.qty+delta)}:c));}
-    function removeFromCart(p){setCart(cart.filter(c=>c!==p));}
-
-    async function confirmAndSend(){
-      if(cart.length===0){alert("Cart empty");return;}
-      if(!userName||!userAddress){alert("Please enter your name & address");return;}
-      document.getElementById("loader").style.display="flex";
-
-      const { jsPDF } = window.jspdf;
-      const doc=new jsPDF({unit:'px',format:'a4'});
-      let y=40;
-      doc.setFontSize(16);
-      doc.text("Yes Fashion Hub - Order",40,30);
-      doc.setFontSize(12);
-      doc.text(`Customer: ${userName}`,40,y);y+=20;
-      doc.text(`Address: ${userAddress}`,40,y);y+=20;
-      y+=10;
-      for(const item of cart){
-        if(item.pimage){
-          try{
-            const resp=await fetch(item.pimage);
-            const blob=await resp.blob();
-            const dataUrl=await new Promise((res,rej)=>{
-              const fr=new FileReader();
-              fr.onload=()=>res(fr.result);
-              fr.onerror=rej;
-              fr.readAsDataURL(blob);
-            });
-            doc.addImage(dataUrl,"JPEG",40,y,60,60);
-          }catch(e){console.warn("img err",e);}
+        // If it's a GitHub blob link, convert to raw
+        if (val.includes('github.com') && val.includes('/blob/')) {
+          // convert https://github.com/user/repo/blob/main/images/file.jpg -> https://raw.githubusercontent.com/user/repo/main/images/file.jpg
+          return val.replace('https://github.com/', 'https://raw.githubusercontent.com/').replace('/blob/', '/');
         }
-        doc.text(`${item.pname} | ${item.pdesc}`,110,y+20);
-        doc.text(`Size: ${item.psize||"-"} | Rate: ₹${item.prate||"-"} | Qty: ${item.qty}`,110,y+40);
-        y+=80;
-        if(y>700){doc.addPage();y=40;}
-      }
-      const total=cart.reduce((s,i)=>s+(Number(i.prate||0)*i.qty),0);
-      doc.setFontSize(14);
-      doc.text(`Total: ₹${total}`,40,y+20);
 
-      const pdfName=`${userName.replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.pdf`;
-      const pdfBlob=doc.output('blob');
-      const reader=new FileReader();
-      reader.onload=async()=>{
-        const base64=reader.result.split(',')[1];
-        const uploadUrl=`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${GITHUB_FOLDER}/${pdfName}`;
-        const resp=await fetch(uploadUrl,{
-          method:'PUT',
-          headers:{
-            "Authorization":`token ${GITHUB_TOKEN}`,
-            "Content-Type":"application/json"
-          },
-          body:JSON.stringify({
-            message:`Order from ${userName}`,
-            content:base64
-          })
+        // Google Drive patterns
+        if (val.includes('drive.google.com/open?id=')) {
+          const id = val.split('id=')[1].split('&')[0];
+          return `https://drive.google.com/uc?export=view&id=${id}`;
+        }
+        if (val.includes('drive.google.com/file/d/')) {
+          const id = val.split('/d/')[1].split('/')[0];
+          return `https://drive.google.com/uc?export=view&id=${id}`;
+        }
+        if (val.includes('drive.google.com/uc?export=view')) {
+          return val;
+        }
+
+        // fallback - return original
+        return val;
+      }
+
+      // App component
+      function App(){
+        const [products, setProducts] = useState([]);
+        const [filtered, setFiltered] = useState([]);
+        const [categories, setCategories] = useState([]);
+        const [q, setQ] = useState('');
+        const [cat, setCat] = useState('All');
+        const [cartOpen, setCartOpen] = useState(false);
+        const [cart, setCart] = useState(() => {
+          try { return JSON.parse(localStorage.getItem('yf_cart') || '[]') } catch(e) { return [] }
         });
-        const json=await resp.json();
-        document.getElementById("loader").style.display="none";
-        if(json.content&&json.content.download_url){
-          const pdfUrl=json.content.download_url;
-          const msg=`My Name is ${encodeURIComponent(userName)}.%0AAddress: ${encodeURIComponent(userAddress)}.%0A%0APlease find my order PDF and confirm soon.%0A${encodeURIComponent(pdfUrl)}`;
-          const wa=`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`;
-          window.open(wa,'_blank');
-          alert("Order uploaded successfully! WhatsApp opened.");
-        }else{
-          alert("Upload failed. Check token or repo path.");
-          console.error(json);
+
+        // load products once
+        useEffect(() => {
+          let mounted = true;
+          fetchSheet().then(rows => {
+            if (!mounted) return;
+            // Normalize columns - support variations in header names
+            const normalized = rows.map(r => {
+              // prefer Pimage / pimage / image etc
+              const imageCell = r.Pimage || r.pimage || r['Pimage '] || r['pimage url'] || r.Image || r.image || '';
+              return {
+                category: (r.Category || r.categories || r.category || '').toString(),
+                pname: (r.Pname || r.pname || r.Product || r.product || '').toString(),
+                pdesc: (r.Pdesc || r.pdesc || r.Description || r.description || '').toString(),
+                psize: (r.Psize || r.psize || r.size || '').toString(),
+                prate: (r.Prate || r.prate || r.Price || r.price || '0').toString(),
+                pimage: normalizeImageUrl(imageCell)
+              };
+            });
+            setProducts(normalized);
+            setFiltered(normalized);
+            const cats = Array.from(new Set(normalized.map(x => (x.category && x.category.trim()) ? x.category.trim() : 'Uncategorized')));
+            setCategories(['All', ...cats]);
+          }).catch(err => {
+            console.error('Failed to fetch sheet:', err);
+            setProducts([]);
+            setFiltered([]);
+            setCategories(['All']);
+          });
+          return () => { mounted = false };
+        }, []);
+
+        // persist cart
+        useEffect(() => {
+          localStorage.setItem('yf_cart', JSON.stringify(cart));
+        }, [cart]);
+
+        // filter products
+        useEffect(() => {
+          const out = products.filter(d => {
+            const matchesQ = !q || (d.pname && d.pname.toLowerCase().includes(q.toLowerCase())) || (d.pdesc && d.pdesc.toLowerCase().includes(q.toLowerCase()));
+            const matchesCat = (cat === 'All') || (d.category === cat);
+            return matchesQ && matchesCat;
+          });
+          setFiltered(out);
+        }, [products, q, cat]);
+
+        // cart helpers
+        function addToCart(item){
+          const idx = cart.findIndex(c => c.pname === item.pname && c.pimage === item.pimage);
+          if (idx > -1) {
+            const copy = cart.slice();
+            copy[idx].qty += 1;
+            setCart(copy);
+          } else {
+            setCart([...cart, { ...item, qty: 1 }]);
+          }
         }
-      };
-      reader.readAsDataURL(pdfBlob);
-    }
+        function changeQty(item, delta){
+          setCart(cart.map(c => c === item ? {...c, qty: Math.max(1, c.qty + delta)} : c));
+        }
+        function removeFromCart(item){
+          setCart(cart.filter(c => c !== item));
+        }
 
-    const total=cart.reduce((s,i)=>s+(Number(i.prate||0)*i.qty),0);
+        // PDF generation - embed images (uses fetch -> blob -> dataURL)
+        async function generatePDFAndDownload() {
+          if (cart.length === 0) { alert('Cart empty'); return; }
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF({unit:'px', format:'a4'});
+          doc.setFontSize(16);
+          doc.text('Yes Fashion Hub - Order', 40, 30);
+          let y = 50;
 
-    return React.createElement('div',{className:'container'},
-      React.createElement('header',null,
-        React.createElement('div',{className:'logo'},
-          React.createElement('img',{src:'https://via.placeholder.com/80x80.png?text=Logo'}),
-          React.createElement('div',null,
-            React.createElement('div',{style:{fontWeight:700,fontSize:18}},'Yes Fashion Hub'),
-            React.createElement('div',{style:{fontSize:12,color:'#666'}},'Custom Prints & Designs')
-          )
-        ),
-        React.createElement('div',null,
-          React.createElement('button',{className:'btn cart-btn',onClick:()=>setCartOpen(true)},'Cart'),
-          cart.length>0&&React.createElement('span',{className:'cart-count'},cart.reduce((s,i)=>s+i.qty,0))
-        )
-      ),
-      React.createElement('div',{className:'slider'},'Slider area'),
-      React.createElement('div',{className:'search-bar'},
-        React.createElement('input',{placeholder:'Search products...',value:q,onChange:e=>setQ(e.target.value)}),
-        React.createElement('select',{value:cat,onChange:e=>setCat(e.target.value)},
-          categories.map(c=>React.createElement('option',{key:c,value:c},c))
-        )
-      ),
-      React.createElement('div',{className:'grid'},
-        filtered.map((p,idx)=>
-          React.createElement('div',{className:'card',key:idx},
-            React.createElement('img',{src:p.pimage||'https://via.placeholder.com/400x300?text=No+Image'}),
-            React.createElement('h3',null,p.pname),
-            React.createElement('p',null,p.pdesc),
-            React.createElement('p',null,'Size: '+(p.psize||'-')),
-            React.createElement('p',null,'₹'+(p.prate||'-')),
-            React.createElement('button',{className:'btn',onClick:()=>addToCart(p)},'Add to cart')
-          )
-        )
-      ),
-      cartOpen&&React.createElement('div',{className:'modal'},
-        React.createElement('div',{className:'modal-content'},
-          React.createElement('h3',null,'Your Cart'),
-          React.createElement('div',{className:'divider'}),
-          cart.map((c,i)=>
-            React.createElement('div',{className:'cart-row',key:i},
-              React.createElement('img',{src:c.pimage||'https://via.placeholder.com/80'}),
-              React.createElement('div',{style:{flex:1}},
-                React.createElement('div',{style:{fontWeight:600}},c.pname),
-                React.createElement('div',null,c.pdesc),
-                React.createElement('div',null,'Size: '+(c.psize||'-')),
-                React.createElement('div',null,'₹'+(c.prate||'-')+' x '+c.qty)
+          for (const item of cart) {
+            // attempt to fetch image and convert to dataURL
+            if (item.pimage) {
+              try {
+                const resp = await fetch(item.pimage, {mode: 'cors'});
+                if (resp.ok) {
+                  const blob = await resp.blob();
+                  // read as dataURL
+                  const dataUrl = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                  });
+                  doc.addImage(dataUrl, 'JPEG', 40, y, 90, 90);
+                } else {
+                  // image fetch failed (CORS or 404) - ignore image
+                  console.warn('Image fetch failed', item.pimage, resp.status);
+                }
+              } catch (err) {
+                console.warn('Image fetch/convert error', err);
+              }
+            }
+
+            doc.setFontSize(12);
+            doc.text(`${item.pname || ''}`, 140, y + 20);
+            doc.text(`${item.pdesc || ''}`, 140, y + 40);
+            doc.text(`Size: ${item.psize || '-'} | Rate: ₹${item.prate || '-'} | Qty: ${item.qty}`, 140, y + 60);
+            y += 120;
+            if (y > 720) { doc.addPage(); y = 40; }
+          }
+
+          const total = cart.reduce((s,i)=> s + (Number(i.prate || 0) * Number(i.qty || 1)), 0);
+          doc.setFontSize(14);
+          doc.text(`Total: ₹${total}`, 40, y + 20);
+
+          const filename = `order_${Date.now()}.pdf`;
+          doc.save(filename);
+
+          alert('PDF downloaded. Open WhatsApp and attach the PDF to send the order.');
+        }
+
+        // WhatsApp - opens conversation prefilled to your number (can't attach file automatically via wa.me)
+        function sendOrderToWhatsApp() {
+          if (cart.length === 0) { alert('Cart empty'); return; }
+          let msg = `Yes Fashion Hub - Order%0A%0A`;
+          cart.forEach((c, i) => {
+            msg += `${i+1}. ${encodeURIComponent(c.pname)} | Qty: ${c.qty} | Rate: ₹${c.prate}%0A`;
+            // we include image link too for quick reference (WhatsApp will show preview if possible)
+            if (c.pimage) {
+              msg += `Image: ${encodeURIComponent(c.pimage)}%0A`;
+            }
+            msg += `%0A`;
+          });
+          const total = cart.reduce((s,i)=> s + (Number(i.prate || 0) * Number(i.qty || 1)), 0);
+          msg += `Total: ₹${total}%0A%0APlease confirm and share payment details.`;
+          const wa = `https://wa.me/${WHATSAPP_NUMBER_WITHOUT_PLUS}?text=${encodeURIComponent(msg)}`;
+          window.open(wa, '_blank');
+        }
+
+        // UI
+        return React.createElement('div', {className:'container'},
+          React.createElement('header', null,
+            React.createElement('div', {className:'logo'},
+              React.createElement('img',{src:'https://via.placeholder.com/80x80.png?text=Logo', alt:'logo'}),
+              React.createElement('div', null,
+                React.createElement('div',{style:{fontWeight:700,fontSize:18}}, 'Yes Fashion Hub'),
+                React.createElement('div',{style:{fontSize:12,color:'#666'}}, 'Custom Prints & Designs')
+              )
+            ),
+            React.createElement('div', {style:{display:'flex',alignItems:'center',gap:12}},
+              React.createElement('div',{style:{display:'flex',alignItems:'center',gap:12}},
+                React.createElement('input',{placeholder:'Search products...', value:q, onChange:e=>setQ(e.target.value), style:{padding:8,borderRadius:6,border:'1px solid #ddd'}}),
+                React.createElement('select',{value:cat,onChange:e=>setCat(e.target.value), style:{padding:8,borderRadius:6,border:'1px solid #ddd'}},
+                  categories.map(c => React.createElement('option',{key:c,value:c},c))
+                )
               ),
-              React.createElement('div',null,
-                React.createElement('button',{onClick:()=>changeQty(c,1)},'+'),
-                React.createElement('button',{onClick:()=>changeQty(c,-1)},'-'),
-                React.createElement('button',{onClick:()=>removeFromCart(c)},'Remove')
+              React.createElement('div',{className:'cart-wrap'},
+                React.createElement('button',{className:'cart-btn', onClick:()=>setCartOpen(true)}, '🛒'),
+                cart.length > 0 && React.createElement('span',{className:'cart-count'}, cart.reduce((s,i)=>s+i.qty,0))
               )
             )
           ),
-          React.createElement('div',{className:'divider'}),
-          React.createElement('p',{style:{fontWeight:'bold'}},'Total: ₹'+total),
-          React.createElement('input',{placeholder:'Your Name',value:userName,onChange:e=>setUserName(e.target.value),style:{width:'100%',margin:'8px 0',padding:'8px'}}),
-          React.createElement('textarea',{placeholder:'Your Address',value:userAddress,onChange:e=>setUserAddress(e.target.value),style:{width:'100%',margin:'8px 0',padding:'8px'}}),
-          React.createElement('button',{className:'btn',onClick:confirmAndSend},'Confirm Order & Send WhatsApp'),
-          ' ',
-          React.createElement('button',{className:'btn',onClick:()=>setCartOpen(false)},'Close')
-        )
-      )
-    );
-  }
 
-  ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
-})();
-</script>
-```
-    
+          React.createElement('div',{className:'slider'}, ' Slider area (add images / promos later)'),
+
+          React.createElement('div',{className:'grid'},
+            filtered.map((p, idx) =>
+              React.createElement('div',{className:'card', key:idx},
+                React.createElement('img',{src: p.pimage || 'https://via.placeholder.com/400x300?text=No+Image', alt: p.pname}),
+                React.createElement('h3', null, p.pname || 'Unnamed'),
+                React.createElement('p', null, p.pdesc),
+                React.createElement('p', null, 'Size: ' + (p.psize || '-')),
+                React.createElement('p', null, '₹' + (p.prate || '-')),
+                React.createElement('div', null,
+                  React.createElement('button',{className:'btn', onClick:()=>addToCart(p)}, 'Add to cart')
+                )
+              )
+            )
+          ),
+
+          cartOpen && React.createElement('div',{className:'modal'},
+            React.createElement('div',{className:'modal-content'},
+              React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
+                React.createElement('h3', null, 'Your Cart'),
+                React.createElement('div', null,
+                  React.createElement('button',{className:'btn', onClick:generatePDFAndDownload}, 'Download PDF'),
+                  ' ',
+                  React.createElement('button',{className:'btn', onClick:sendOrderToWhatsApp}, 'Send to WhatsApp'),
+                  ' ',
+                  React.createElement('button',{className:'btn', onClick:()=>setCartOpen(false)}, 'Close')
+                )
+              ),
+              React.createElement('div',{className:'divider'}),
+              cart.length === 0 ? React.createElement('div', null, 'Cart is empty') :
+              cart.map((c, i) =>
+                React.createElement('div',{className:'cart-row', key:i},
+                  React.createElement('img',{src:c.pimage || 'https://via.placeholder.com/80', alt:c.pname}),
+                  React.createElement('div',{style:{flex:1}},
+                    React.createElement('div',{style:{fontWeight:600}}, c.pname),
+                    React.createElement('div', null, c.pdesc),
+                    React.createElement('div', null, 'Size: ' + (c.psize || '-')),
+                    React.createElement('div', null, '₹' + (c.prate || '-') + ' x ' + c.qty)
+                  ),
+                  React.createElement('div', null,
+                    React.createElement('button',{className:'qty-btn', onClick:()=>changeQty(c,1)}, '+'),
+                    React.createElement('button',{className:'qty-btn', onClick:()=>changeQty(c,-1)}, '-'),
+                    React.createElement('button',{className:'qty-btn', onClick:()=>removeFromCart(c)}, 'Remove')
+                  )
+                )
+              )
+            )
+          )
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+    })();
+    </script>
   </body>
 </html>
