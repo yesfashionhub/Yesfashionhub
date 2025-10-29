@@ -2,330 +2,242 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>YesFashionHub - WhatsApp Store</title>
+    <title>YesFashionHub - Cart & Order</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <style>
-      /* layout + visual */
       body{font-family:Inter,system-ui,Arial;margin:0;background:#f5f5f7}
-      .container{max-width:1200px;margin:0 auto;padding:16px}
-      header{display:flex;align-items:center;justify-content:space-between;padding:12px 0}
-      .logo{display:flex;align-items:center;gap:8px}
-      .logo img{height:48px;border-radius:8px}
-      .search-bar{display:flex;gap:8px;margin:12px 0}
-      .search-bar input, .search-bar select{padding:8px;border-radius:6px;border:1px solid #ddd}
-      .slider{height:180px;background:#ddd;border-radius:8px;margin:12px 0;display:flex;align-items:center;justify-content:center}
-      .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
-      .card{background:#fff;border-radius:8px;padding:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
-      .card img{width:100%;height:160px;object-fit:cover;border-radius:6px}
-      .btn{padding:8px 10px;border-radius:6px;border:none;background:#0b74ff;color:#fff;cursor:pointer}
-      /* cart button + badge */
-      .cart-wrap{position:relative;display:inline-block}
-      .cart-btn{padding:8px 12px;border-radius:6px;border:none;background:#0b74ff;color:#fff;cursor:pointer;font-size:16px}
-      .cart-count{
-        position:absolute;
-        top:-8px;
-        right:-8px;
-        background:#ff3b30;
-        color:#fff;
-        padding:4px 7px;
-        border-radius:50%;
-        font-size:12px;
-        font-weight:700;
-        line-height:1;
-        box-shadow:0 1px 2px rgba(0,0,0,0.2)
-      }
-      .modal{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:1000}
-      .modal-content{background:#fff;padding:16px;border-radius:8px;max-width:900px;width:100%;max-height:90vh;overflow:auto}
-      .cart-row{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #eee}
-      .cart-row img{width:90px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #eee}
-      .qty-btn{margin:0 6px;padding:4px 8px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer}
-      .divider{height:1px;background:#eee;margin:8px 0}
-      @media (max-width:640px){ .grid{grid-template-columns:repeat(1,1fr)} .card img{height:200px} }
+      .container{max-width:900px;margin:20px auto;padding:16px;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+      h2{margin-top:0}
+      .item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #eee;align-items:center}
+      .item img{width:80px;height:80px;object-fit:cover;border-radius:6px}
+      .right{margin-left:auto;text-align:right}
+      .btn{padding:8px 12px;border-radius:6px;border:none;background:#0b74ff;color:#fff;cursor:pointer}
+      .loader{display:none;position:fixed;inset:0;background:rgba(255,255,255,0.8);align-items:center;justify-content:center;z-index:999}
+      .spinner{border:5px solid #eee;border-top:5px solid #0b74ff;border-radius:50%;width:44px;height:44px;animation:spin 1s linear infinite;margin-right:12px}
+      @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+      .controls{display:flex;gap:8px;flex-wrap:wrap}
+      input, textarea{width:100%;padding:8px;border:1px solid #ddd;border-radius:6px}
     </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div class="container">
+      <h2>Yes Fashion Hub — Your Cart</h2>
+      <div id="items"></div>
+      <div style="text-align:right;font-weight:700;margin-top:12px" id="total"></div>
 
-    <!-- React -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+      <h3 style="margin-top:18px">Customer details</h3>
+      <div style="margin-bottom:8px"><input id="custName" placeholder="Your name" /></div>
+      <div style="margin-bottom:12px"><textarea id="custAddress" rows="3" placeholder="Delivery address"></textarea></div>
+
+      <div class="controls">
+        <button id="confirmBtn" class="btn">Confirm Order — Generate PDF & Upload</button>
+        <button id="clearBtn" class="btn" style="background:#888">Clear Cart</button>
+      </div>
+    </div>
+
+    <div id="loader" class="loader" style="display:none;align-items:center;justify-content:center">
+      <div class="spinner"></div>
+      <div style="font-weight:700;color:#0b74ff">Processing order — please wait...</div>
+    </div>
+
     <!-- jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <script>
-    (function(){
-      const { useState, useEffect } = React;
+    (async function(){
+      // ====== CONFIG - change only APPS_SCRIPT_UPLOAD_URL to your deployed Web App URL ======
+      const APPS_SCRIPT_UPLOAD_URL = 'PASTE_YOUR_APPS_SCRIPT_WEBAPP_URL_HERE'; // <-- replace with Apps Script Web App URL from deploy
+      const WHATSAPP_NUMBER = '919978653852'; // your number with country code, no plus sign
+      // ====================================================================================
 
-      // *** CONFIG - only change if needed ***
-      const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxENH68uAePu7ORZJawjjXVqvTJfXB8gpBVNfizrdOmyURo8vu4edhr7h9BDc1SdSxlEg/exec';
-      const WHATSAPP_NUMBER_WITHOUT_PLUS = '919978653852'; // country code+number for wa.me (91 + 9978653852)
-      // ***************************************
+      // Sample cart source: use your actual product list source (here we read from localStorage 'yf_cart')
+      const cart = (() => {
+        try { return JSON.parse(localStorage.getItem('yf_cart') || '[]') } catch(e){ return [] }
+      })();
 
-      // fetch sheet JSON (your Apps Script doGet returns { data: [...] })
-      async function fetchSheet() {
-        const res = await fetch(SHEET_URL);
-        const json = await res.json();
-        if (!json || !json.data) return [];
-        return json.data.map(row => ({ ...row }));
-      }
-
-      // helpers to normalize image URLs (Github raw or Drive or already direct)
-      function normalizeImageUrl(cell) {
-        if (!cell) return '';
-        // If cell contains multiple URLs, pick first non-empty
-        let val = String(cell);
-        // sometimes sheet values are like "url1, url2" or newline separated; keep first
-        if (val.includes(',')) val = val.split(',')[0].trim();
-        if (val.includes('\n')) val = val.split('\n')[0].trim();
-
-        // If it's already raw.githubusercontent link, return as-is
-        if (val.includes('raw.githubusercontent.com')) return val;
-
-        // If it's a GitHub blob link, convert to raw
-        if (val.includes('github.com') && val.includes('/blob/')) {
-          // convert https://github.com/user/repo/blob/main/images/file.jpg -> https://raw.githubusercontent.com/user/repo/main/images/file.jpg
-          return val.replace('https://github.com/', 'https://raw.githubusercontent.com/').replace('/blob/', '/');
+      // render cart
+      const itemsDiv = document.getElementById('items');
+      const totalDiv = document.getElementById('total');
+      function renderCart() {
+        itemsDiv.innerHTML = '';
+        let total=0;
+        if (!cart || cart.length === 0) {
+          itemsDiv.innerHTML = '<div style="padding:10px;color:#666">Your cart is empty</div>';
+          totalDiv.innerText = '';
+          return;
         }
-
-        // Google Drive patterns
-        if (val.includes('drive.google.com/open?id=')) {
-          const id = val.split('id=')[1].split('&')[0];
-          return `https://drive.google.com/uc?export=view&id=${id}`;
-        }
-        if (val.includes('drive.google.com/file/d/')) {
-          const id = val.split('/d/')[1].split('/')[0];
-          return `https://drive.google.com/uc?export=view&id=${id}`;
-        }
-        if (val.includes('drive.google.com/uc?export=view')) {
-          return val;
-        }
-
-        // fallback - return original
-        return val;
-      }
-
-      // App component
-      function App(){
-        const [products, setProducts] = useState([]);
-        const [filtered, setFiltered] = useState([]);
-        const [categories, setCategories] = useState([]);
-        const [q, setQ] = useState('');
-        const [cat, setCat] = useState('All');
-        const [cartOpen, setCartOpen] = useState(false);
-        const [cart, setCart] = useState(() => {
-          try { return JSON.parse(localStorage.getItem('yf_cart') || '[]') } catch(e) { return [] }
+        cart.forEach((it, idx) => {
+          total += Number(it.prate || it.prate==='' ? (Number(it.prate)||Number(it.price)||0) : 0) || Number(it.price||it.prate||0);
+          const row = document.createElement('div');
+          row.className = 'item';
+          row.innerHTML = `
+            <img src="${escapeHtml(formatImage(it.pimage||it.image||it.Pimage||''))}" />
+            <div>
+              <div style="font-weight:700">${escapeHtml(it.pname||it.name||'Unnamed')}</div>
+              <div style="color:#555">${escapeHtml(it.pdesc||it.desc||'')}</div>
+              <div style="color:#777;font-size:13px">Size: ${escapeHtml(it.psize||it.size||'-')}</div>
+            </div>
+            <div class="right">₹ ${Number(it.prate||it.price||0).toFixed(2)}</div>
+          `;
+          itemsDiv.appendChild(row);
         });
+        totalDiv.innerText = 'Total: ₹' + Number(total).toFixed(2);
+      }
+      function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
-        // load products once
-        useEffect(() => {
-          let mounted = true;
-          fetchSheet().then(rows => {
-            if (!mounted) return;
-            // Normalize columns - support variations in header names
-            const normalized = rows.map(r => {
-              // prefer Pimage / pimage / image etc
-              const imageCell = r.Pimage || r.pimage || r['Pimage '] || r['pimage url'] || r.Image || r.image || '';
-              return {
-                category: (r.Category || r.categories || r.category || '').toString(),
-                pname: (r.Pname || r.pname || r.Product || r.product || '').toString(),
-                pdesc: (r.Pdesc || r.pdesc || r.Description || r.description || '').toString(),
-                psize: (r.Psize || r.psize || r.size || '').toString(),
-                prate: (r.Prate || r.prate || r.Price || r.price || '0').toString(),
-                pimage: normalizeImageUrl(imageCell)
-              };
-            });
-            setProducts(normalized);
-            setFiltered(normalized);
-            const cats = Array.from(new Set(normalized.map(x => (x.category && x.category.trim()) ? x.category.trim() : 'Uncategorized')));
-            setCategories(['All', ...cats]);
-          }).catch(err => {
-            console.error('Failed to fetch sheet:', err);
-            setProducts([]);
-            setFiltered([]);
-            setCategories(['All']);
-          });
-          return () => { mounted = false };
-        }, []);
-
-        // persist cart
-        useEffect(() => {
-          localStorage.setItem('yf_cart', JSON.stringify(cart));
-        }, [cart]);
-
-        // filter products
-        useEffect(() => {
-          const out = products.filter(d => {
-            const matchesQ = !q || (d.pname && d.pname.toLowerCase().includes(q.toLowerCase())) || (d.pdesc && d.pdesc.toLowerCase().includes(q.toLowerCase()));
-            const matchesCat = (cat === 'All') || (d.category === cat);
-            return matchesQ && matchesCat;
-          });
-          setFiltered(out);
-        }, [products, q, cat]);
-
-        // cart helpers
-        function addToCart(item){
-          const idx = cart.findIndex(c => c.pname === item.pname && c.pimage === item.pimage);
-          if (idx > -1) {
-            const copy = cart.slice();
-            copy[idx].qty += 1;
-            setCart(copy);
-          } else {
-            setCart([...cart, { ...item, qty: 1 }]);
-          }
+      function formatImage(url){
+        if(!url) return '';
+        // If it's drive "open?id=" convert to uc?export=view
+        if (url.includes('drive.google.com/open?id=')) {
+          const id = url.split('id=')[1].split('&')[0];
+          return `https://drive.google.com/uc?export=view&id=${id}`;
         }
-        function changeQty(item, delta){
-          setCart(cart.map(c => c === item ? {...c, qty: Math.max(1, c.qty + delta)} : c));
+        if (url.includes('drive.google.com/file/d/')) {
+          const id = url.split('/d/')[1].split('/')[0];
+          return `https://drive.google.com/uc?export=view&id=${id}`;
         }
-        function removeFromCart(item){
-          setCart(cart.filter(c => c !== item));
-        }
-
-        // PDF generation - embed images (uses fetch -> blob -> dataURL)
-        async function generatePDFAndDownload() {
-          if (cart.length === 0) { alert('Cart empty'); return; }
-          const { jsPDF } = window.jspdf;
-          const doc = new jsPDF({unit:'px', format:'a4'});
-          doc.setFontSize(16);
-          doc.text('Yes Fashion Hub - Order', 40, 30);
-          let y = 50;
-
-          for (const item of cart) {
-            // attempt to fetch image and convert to dataURL
-            if (item.pimage) {
-              try {
-                const resp = await fetch(item.pimage, {mode: 'cors'});
-                if (resp.ok) {
-                  const blob = await resp.blob();
-                  // read as dataURL
-                  const dataUrl = await new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result);
-                    reader.onerror = reject;
-                    reader.readAsDataURL(blob);
-                  });
-                  doc.addImage(dataUrl, 'JPEG', 40, y, 90, 90);
-                } else {
-                  // image fetch failed (CORS or 404) - ignore image
-                  console.warn('Image fetch failed', item.pimage, resp.status);
-                }
-              } catch (err) {
-                console.warn('Image fetch/convert error', err);
-              }
-            }
-
-            doc.setFontSize(12);
-            doc.text(`${item.pname || ''}`, 140, y + 20);
-            doc.text(`${item.pdesc || ''}`, 140, y + 40);
-            doc.text(`Size: ${item.psize || '-'} | Rate: ₹${item.prate || '-'} | Qty: ${item.qty}`, 140, y + 60);
-            y += 120;
-            if (y > 720) { doc.addPage(); y = 40; }
-          }
-
-          const total = cart.reduce((s,i)=> s + (Number(i.prate || 0) * Number(i.qty || 1)), 0);
-          doc.setFontSize(14);
-          doc.text(`Total: ₹${total}`, 40, y + 20);
-
-          const filename = `order_${Date.now()}.pdf`;
-          doc.save(filename);
-
-          alert('PDF downloaded. Open WhatsApp and attach the PDF to send the order.');
-        }
-
-        // WhatsApp - opens conversation prefilled to your number (can't attach file automatically via wa.me)
-        function sendOrderToWhatsApp() {
-          if (cart.length === 0) { alert('Cart empty'); return; }
-          let msg = `Yes Fashion Hub - Order%0A%0A`;
-          cart.forEach((c, i) => {
-            msg += `${i+1}. ${encodeURIComponent(c.pname)} | Qty: ${c.qty} | Rate: ₹${c.prate}%0A`;
-            // we include image link too for quick reference (WhatsApp will show preview if possible)
-            if (c.pimage) {
-              msg += `Image: ${encodeURIComponent(c.pimage)}%0A`;
-            }
-            msg += `%0A`;
-          });
-          const total = cart.reduce((s,i)=> s + (Number(i.prate || 0) * Number(i.qty || 1)), 0);
-          msg += `Total: ₹${total}%0A%0APlease confirm and share payment details.`;
-          const wa = `https://wa.me/${WHATSAPP_NUMBER_WITHOUT_PLUS}?text=${encodeURIComponent(msg)}`;
-          window.open(wa, '_blank');
-        }
-
-        // UI
-        return React.createElement('div', {className:'container'},
-          React.createElement('header', null,
-            React.createElement('div', {className:'logo'},
-              React.createElement('img',{src:'https://via.placeholder.com/80x80.png?text=Logo', alt:'logo'}),
-              React.createElement('div', null,
-                React.createElement('div',{style:{fontWeight:700,fontSize:18}}, 'Yes Fashion Hub'),
-                React.createElement('div',{style:{fontSize:12,color:'#666'}}, 'Custom Prints & Designs')
-              )
-            ),
-            React.createElement('div', {style:{display:'flex',alignItems:'center',gap:12}},
-              React.createElement('div',{style:{display:'flex',alignItems:'center',gap:12}},
-                React.createElement('input',{placeholder:'Search products...', value:q, onChange:e=>setQ(e.target.value), style:{padding:8,borderRadius:6,border:'1px solid #ddd'}}),
-                React.createElement('select',{value:cat,onChange:e=>setCat(e.target.value), style:{padding:8,borderRadius:6,border:'1px solid #ddd'}},
-                  categories.map(c => React.createElement('option',{key:c,value:c},c))
-                )
-              ),
-              React.createElement('div',{className:'cart-wrap'},
-                React.createElement('button',{className:'cart-btn', onClick:()=>setCartOpen(true)}, '🛒'),
-                cart.length > 0 && React.createElement('span',{className:'cart-count'}, cart.reduce((s,i)=>s+i.qty,0))
-              )
-            )
-          ),
-
-          React.createElement('div',{className:'slider'}, ' Slider area (add images / promos later)'),
-
-          React.createElement('div',{className:'grid'},
-            filtered.map((p, idx) =>
-              React.createElement('div',{className:'card', key:idx},
-                React.createElement('img',{src: p.pimage || 'https://via.placeholder.com/400x300?text=No+Image', alt: p.pname}),
-                React.createElement('h3', null, p.pname || 'Unnamed'),
-                React.createElement('p', null, p.pdesc),
-                React.createElement('p', null, 'Size: ' + (p.psize || '-')),
-                React.createElement('p', null, '₹' + (p.prate || '-')),
-                React.createElement('div', null,
-                  React.createElement('button',{className:'btn', onClick:()=>addToCart(p)}, 'Add to cart')
-                )
-              )
-            )
-          ),
-
-          cartOpen && React.createElement('div',{className:'modal'},
-            React.createElement('div',{className:'modal-content'},
-              React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
-                React.createElement('h3', null, 'Your Cart'),
-                React.createElement('div', null,
-                  React.createElement('button',{className:'btn', onClick:generatePDFAndDownload}, 'Download PDF'),
-                  ' ',
-                  React.createElement('button',{className:'btn', onClick:sendOrderToWhatsApp}, 'Send to WhatsApp'),
-                  ' ',
-                  React.createElement('button',{className:'btn', onClick:()=>setCartOpen(false)}, 'Close')
-                )
-              ),
-              React.createElement('div',{className:'divider'}),
-              cart.length === 0 ? React.createElement('div', null, 'Cart is empty') :
-              cart.map((c, i) =>
-                React.createElement('div',{className:'cart-row', key:i},
-                  React.createElement('img',{src:c.pimage || 'https://via.placeholder.com/80', alt:c.pname}),
-                  React.createElement('div',{style:{flex:1}},
-                    React.createElement('div',{style:{fontWeight:600}}, c.pname),
-                    React.createElement('div', null, c.pdesc),
-                    React.createElement('div', null, 'Size: ' + (c.psize || '-')),
-                    React.createElement('div', null, '₹' + (c.prate || '-') + ' x ' + c.qty)
-                  ),
-                  React.createElement('div', null,
-                    React.createElement('button',{className:'qty-btn', onClick:()=>changeQty(c,1)}, '+'),
-                    React.createElement('button',{className:'qty-btn', onClick:()=>changeQty(c,-1)}, '-'),
-                    React.createElement('button',{className:'qty-btn', onClick:()=>removeFromCart(c)}, 'Remove')
-                  )
-                )
-              )
-            )
-          )
-        );
+        // already fine or raw github / http
+        return url;
       }
 
-      ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+      renderCart();
+
+      // helper: add image to PDF — fetch image as blob -> dataURL
+      async function fetchImageDataURL(url) {
+        if (!url) return null;
+        try {
+          const resp = await fetch(url, {mode:'cors'});
+          if (!resp.ok) throw 'HTTP ' + resp.status;
+          const blob = await resp.blob();
+          return await new Promise((res, rej) => {
+            const fr = new FileReader();
+            fr.onload = ()=>res(fr.result);
+            fr.onerror = rej;
+            fr.readAsDataURL(blob);
+          });
+        } catch (err) {
+          console.warn('Image fetch failed', url, err);
+          return null;
+        }
+      }
+
+      // Build PDF (thumbnails) and return blob
+      async function buildPdfBlob(customerName, customerAddress) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({unit:'pt', format:'a4'});
+        const startX = 40;
+        let y = 40;
+        doc.setFontSize(18);
+        doc.text('Yes Fashion Hub - Order', startX, y);
+        doc.setFontSize(12);
+        y += 20;
+        doc.text(`Customer: ${customerName}`, startX, y); y += 16;
+        doc.text(`Address: ${customerAddress}`, startX, y); y += 20;
+
+        let total = 0;
+        for (const it of cart) {
+          const price = Number(it.prate || it.price || 0);
+          total += price * (it.qty || 1);
+
+          // image thumbnail (try)
+          const imgUrl = formatImage(it.pimage || it.image || '');
+          const dataUrl = imgUrl ? await fetchImageDataURL(imgUrl) : null;
+          if (dataUrl) {
+            try { doc.addImage(dataUrl, 'JPEG', startX, y, 60, 60); } catch(e){ console.warn('addImage fail', e); }
+          }
+
+          // product text
+          const leftTextX = startX + 70;
+          doc.setFontSize(12);
+          doc.text(String(it.pname || it.name || ''), leftTextX, y + 16);
+          if (it.pdesc) doc.setFontSize(10), doc.text(String(it.pdesc), leftTextX, y + 32);
+          doc.setFontSize(10);
+          doc.text(`Size: ${it.psize || it.size || '-'} | ₹${price} x ${it.qty||1}`, leftTextX, y + 48);
+          y += 80;
+          if (y > 720) { doc.addPage(); y = 40; }
+        }
+
+        doc.setFontSize(13);
+        doc.text(`Total: ₹${Number(total).toFixed(2)}`, startX, y + 20);
+
+        // return blob
+        const dataUri = doc.output('datauristring');
+        const parts = dataUri.split(',');
+        const mime = parts[0].match(/:(.*?);/)[1];
+        const b64 = parts[1];
+        const bytes = atob(b64);
+        const u8 = new Uint8Array(bytes.length);
+        for (let i=0;i<bytes.length;i++) u8[i] = bytes.charCodeAt(i);
+        return new Blob([u8], { type: mime });
+      }
+
+      // upload blob base64 to Apps Script
+      async function uploadPdfToAppsScript(filename, blob) {
+        const reader = new FileReader();
+        const promise = new Promise((res, rej) => {
+          reader.onload = ()=>res(reader.result);
+          reader.onerror = rej;
+        });
+        reader.readAsDataURL(blob);
+        const dataUrl = await promise; // data:<mime>;base64,<b64>
+        const base64 = dataUrl.split(',')[1];
+
+        // POST
+        const payload = { filename: filename, contentBase64: base64 };
+        const resp = await fetch(APPS_SCRIPT_UPLOAD_URL, {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json' },
+          body: JSON.stringify(payload)
+        });
+        return await resp.json();
+      }
+
+      // UI handlers
+      document.getElementById('confirmBtn').addEventListener('click', async function(){
+        const name = document.getElementById('custName').value.trim();
+        const address = document.getElementById('custAddress').value.trim();
+        if (!name || !address) { alert('Please enter name and address'); return; }
+        if (!cart || cart.length === 0) { alert('Cart empty'); return; }
+
+        // show loader
+        document.getElementById('loader').style.display = 'flex';
+
+        try {
+          const safeName = name.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_\-]/g,'');
+          const datePart = (new Date()).toISOString().slice(0,10);
+          const filename = `${safeName}_${datePart}.pdf`;
+
+          const pdfBlob = await buildPdfBlob(name, address);
+
+          // upload to Apps Script (which will save into your Drive Orders folder)
+          const uploadResult = await uploadPdfToAppsScript(filename, pdfBlob);
+
+          // hide loader
+          document.getElementById('loader').style.display = 'none';
+
+          if (uploadResult && uploadResult.success && uploadResult.url) {
+            const pdfLink = uploadResult.url; // shareable Drive link (viewer)
+            const message = `My Name is ${name}%0AAddress: ${address}%0A%0APlease find my Order PDF and confirm my order soon as possible.%0A${pdfLink}`;
+            // open WhatsApp
+            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
+            alert('Order uploaded & WhatsApp opened (click the link to view the PDF).');
+            // optional: keep cart or clear as you want
+          } else {
+            console.error('Upload failed', uploadResult);
+            alert('Upload failed. See console for details.');
+          }
+        } catch (err) {
+          document.getElementById('loader').style.display = 'none';
+          console.error(err);
+          alert('Error creating/uploading PDF. Check console.');
+        }
+      });
+
+      document.getElementById('clearBtn').addEventListener('click', function(){
+        localStorage.removeItem('yf_cart');
+        location.reload();
+      });
+
     })();
     </script>
   </body>
