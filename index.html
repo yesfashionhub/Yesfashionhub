@@ -290,12 +290,12 @@
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(11);
             let index = 1;
-            let total = 0;
+            let totalt = 0;
         
             for (const item of cart) {
               y += 30;
               const lineTotal = (Number(item.prate || 0) * Number(item.qty || 1));
-              total += lineTotal;
+              totalt += lineTotal;
         
               // Draw image (optional)
               if (item.pimage) {
@@ -338,7 +338,7 @@
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(14);
             doc.text('Grand Total:', 360, y);
-            doc.text(`₹${total}`, 475, y);
+            doc.text(`₹${totalt}`, 475, y);
             doc.setDrawColor(100);
             doc.line(40, y + 10, 555, y + 10);
         
