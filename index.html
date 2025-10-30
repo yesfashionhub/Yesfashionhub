@@ -4,138 +4,179 @@
     <meta charset="utf-8" />
     <title>YesFashionHub - WhatsApp Store</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  * { box-sizing: border-box; }
 
-    <style>
-      * { box-sizing: border-box; }
+  body {
+    font-family: 'Inter', system-ui, Arial;
+    margin: 0;
+    background: #e5ddd5;
+    overflow-x: hidden;
+  }
 
-      body {
-        font-family: 'Inter', system-ui, Arial;
-        margin: 0;
-        background: #e5ddd5;
-        overflow-x: hidden;
-      }
+  /* HEADER */
+  header {
+    background: #25D366;
+    color: #fff;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
 
-      /* HEADER */
-      header {
-        background: #25D366;
-        color: #fff;
-        padding: 10px 16px;
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      }
+  /* Logo styling */
+  .logo-wrap img {
+    height: 50px; /* 20% bigger */
+    width: auto;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(255,255,255,0.8),
+                0 2px 6px rgba(0,0,0,0.25);
+    background: rgba(255,255,255,0.15);
+    padding: 4px;
+  }
 
-      /* Inner header for center alignment */
-      .header-inner {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        position: relative;
-      }
+  /* Cart styling */
+  .cart-wrap {
+    position: relative;
+  }
 
-      /* Logo styling */
-      .logo-wrap img {
-        height: 60px; /* 20% more than before */
-        width: auto;
-        border-radius: 10px;
-        box-shadow:
-          0 0 14px rgba(255,255,255,0.9),
-          0 2px 8px rgba(0,0,0,0.3);
-        background: rgba(255,255,255,0.15);
-        padding: 5px;
-      }
+  .cart-btn {
+    background: #128C7E;
+    border: none;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: transform 0.2s ease, background-color 0.3s;
+  }
 
-      /* Cart button */
-      .cart-wrap {
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-      }
+  .cart-btn:hover {
+    transform: scale(1.1);
+    background: #20ba5a;
+  }
 
-      .cart-btn {
-        background: #128C7E;
-        border: none;
-        border-radius: 50%;
-        width: 46px;
-        height: 46px;
-        font-size: 22px;
-        color: #fff;
-        cursor: pointer;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        transition: transform 0.2s ease, background-color 0.3s;
-      }
+  .cart-count {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #ff3b30;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 12px;
+    padding: 3px 6px;
+  }
 
-      .cart-btn:hover {
-        transform: scale(1.1);
-        background: #20ba5a;
-      }
+  /* Controls, grid, and rest of page unchanged */
+  .tagline {
+    text-align: center;
+    background: #fff;
+    padding: 10px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #128C7E;
+  }
 
-      .cart-count {
-        position: absolute;
-        top: -6px;
-        right: -6px;
-        background: #ff3b30;
-        color: #fff;
-        border-radius: 50%;
-        font-size: 12px;
-        padding: 3px 6px;
-      }
+  .controls {
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+  }
 
-      /* SEARCH + FILTER SECTION */
-      .controls {
-        background: #fff;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        padding: 12px;
-      }
+  .controls input,
+  .controls select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 15px;
+    width: 100%;
+  }
 
-      .controls input,
-      .controls select {
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        font-size: 15px;
-        width: 100%;
-      }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+    padding: 12px;
+  }
 
-      /* PRODUCT GRID */
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 12px;
-        padding: 12px;
-      }
+  .card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease;
+  }
 
-      /* Responsive layout */
-      @media (max-width: 600px) {
-        header { padding: 8px 12px; }
-        .logo-wrap img { height: 54px; }
-        .cart-btn { width: 42px; height: 42px; font-size: 20px; }
-        .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
-      }
-    </style>
+  .card:hover { transform: scale(1.02); }
+
+  .card img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+  }
+
+  .card h3 {
+    margin: 10px 8px 0;
+    font-size: 16px;
+    color: #222;
+  }
+
+  .card p {
+    margin: 4px 8px;
+    font-size: 14px;
+    color: #555;
+  }
+
+  .btn {
+    background: #25D366;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    margin: 8px;
+    font-weight: 600;
+  }
+
+  .btn:hover { background: #20ba5a; }
+
+  /* Responsive tweaks */
+  @media (max-width: 600px) {
+    header { padding: 8px 12px; }
+    .logo-wrap img { height: 44px; }
+    .cart-btn { width: 40px; height: 40px; font-size: 20px; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  }
+</style>
+    
+
   </head>
 
   <body>
 
     <!-- ✅ HEADER should be here, at the top -->
     <header>
-      <div class="header-inner">
-        <div class="logo-wrap">
-          <img
-            src="https://raw.githubusercontent.com/yesfashionhub/yesfashionhub.github.io/main/cropped-yes-lOGO.webp"
-            alt="Logo"
-          />
-        </div>
-        <div class="cart-wrap">
-          <button class="cart-btn" onclick="openCart()">🛍️</button>
-          <span id="cartCount" class="cart-count">0</span>
-        </div>
-      </div>
-    </header>
+  <div class="logo-wrap">
+    <img
+      src="https://raw.githubusercontent.com/yesfashionhub/yesfashionhub.github.io/main/cropped-yes-lOGO.webp"
+      alt="Logo"
+    />
+  </div>
+  <div class="cart-wrap">
+    <button class="cart-btn" onclick="openCart()">🛍️</button>
+    <span id="cartCount" class="cart-count">0</span>
+  </div>
+</header>
 
     <!-- ✅ Search and Filter below Header -->
     <div class="controls">
