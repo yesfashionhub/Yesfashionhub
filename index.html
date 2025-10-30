@@ -9,7 +9,6 @@
 
     <style>
       * { box-sizing: border-box; }
-
       body {
         font-family: 'Inter', system-ui, Arial;
         margin: 0;
@@ -17,7 +16,6 @@
         overflow-x: hidden;
       }
 
-      /* HEADER */
       header {
         background: #25D366;
         color: #fff;
@@ -34,7 +32,6 @@
       .logo-wrap img {
         height: 90px;
         width: auto;
-        align-items: center;
         border-radius: 10px;
         box-shadow: 0 0 10px rgba(255,255,255,0.8),
                     0 2px 6px rgba(0,0,0,0.25);
@@ -42,61 +39,41 @@
         padding: 4px;
       }
 
-      .cart-wrap {
-        position: relative;
-      }
-
+      .cart-wrap { position: relative; }
       .cart-btn {
         background: #128C7E;
         border: none;
         border-radius: 50%;
-        width: 44px;
-        height: 44px;
-        font-size: 22px;
-        color: #fff;
+        width: 44px; height: 44px;
+        font-size: 22px; color: #fff;
         cursor: pointer;
         box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         transition: transform 0.2s ease, background-color 0.3s;
       }
-
-      .cart-btn:hover {
-        transform: scale(1.1);
-        background: #20ba5a;
-      }
-
+      .cart-btn:hover { transform: scale(1.1); background: #20ba5a; }
       .cart-count {
         position: absolute;
-        top: -6px;
-        right: -6px;
-        background: #ff3b30;
-        color: #fff;
-        border-radius: 50%;
-        font-size: 12px;
+        top: -6px; right: -6px;
+        background: #ff3b30; color: #fff;
+        border-radius: 50%; font-size: 12px;
         padding: 3px 6px;
       }
 
       .controls {
         background: #fff;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        padding: 12px;
+        display: flex; flex-direction: column;
+        gap: 8px; padding: 12px;
       }
-
-      .controls input,
-      .controls select {
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        font-size: 15px;
+      .controls input, .controls select {
+        padding: 10px; border: 1px solid #ccc;
+        border-radius: 8px; font-size: 15px;
         width: 100%;
       }
 
       .grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 12px;
-        padding: 12px;
+        gap: 12px; padding: 12px;
       }
 
       .card {
@@ -104,251 +81,247 @@
         border-radius: 10px;
         box-shadow: 0 1px 4px rgba(0,0,0,0.1);
         overflow: hidden;
-        display: flex;
-        flex-direction: column;
+        display: flex; flex-direction: column;
         transition: transform 0.2s ease;
       }
-
       .card:hover { transform: scale(1.02); }
-
       .card img {
-        width: 100%;
-        height: 160px;
-        object-fit: cover;
+        width: 100%; height: 160px; object-fit: cover;
       }
-
-      .card h3 {
-        margin: 10px 8px 0;
-        font-size: 16px;
-        color: #222;
-      }
-
-      .card p {
-        margin: 4px 8px;
-        font-size: 14px;
-        color: #555;
-      }
-
+      .card h3 { margin: 10px 8px 0; font-size: 16px; color: #222; }
+      .card p { margin: 4px 8px; font-size: 14px; color: #555; }
       .btn {
-        background: #25D366;
-        color: #fff;
-        border: none;
-        border-radius: 6px;
-        padding: 8px 12px;
-        cursor: pointer;
-        margin: 8px;
-        font-weight: 600;
+        background: #25D366; color: #fff;
+        border: none; border-radius: 6px;
+        padding: 8px 12px; cursor: pointer;
+        margin: 8px; font-weight: 600;
       }
-
       .btn:hover { background: #20ba5a; }
 
-      @media (max-width: 600px) {
-        header { padding: 8px 12px; }
-        .logo-wrap img { height: 44px; }
-        .cart-btn { width: 40px; height: 40px; font-size: 20px; }
-        .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+      .modal {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex; justify-content: center; align-items: center;
+        z-index: 2000;
+      }
+      .modal-content {
+        background: #fff;
+        border-radius: 10px;
+        padding: 16px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+      .cart-row {
+        display: flex; gap: 8px;
+        align-items: center;
+        margin: 8px 0;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 8px;
+      }
+      .cart-row img {
+        width: 60px; height: 60px; object-fit: cover; border-radius: 8px;
+      }
+      .qty-btn {
+        margin: 2px;
+        background: #eee;
+        border: none;
+        border-radius: 4px;
+        padding: 4px 8px;
+        cursor: pointer;
+      }
+
+      @media (max-width:600px){
+        header{padding:8px 12px;}
+        .logo-wrap img{height:44px;}
+        .cart-btn{width:40px;height:40px;font-size:20px;}
+        .grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));}
       }
     </style>
   </head>
 
   <body>
-    <!-- React Mount Point -->
+    <header>
+      <div class="logo-wrap">
+        <img src="https://raw.githubusercontent.com/yesfashionhub/yesfashionhub.github.io/main/cropped-yes-lOGO.webp" alt="Logo" />
+      </div>
+      <div class="cart-wrap">
+        <button id="openCartBtn" class="cart-btn">🛍️</button>
+        <span id="cartCount" class="cart-count">0</span>
+      </div>
+    </header>
+
+    <div class="controls">
+      <input type="text" id="searchBox" placeholder="Search products..." />
+      <select id="categoryFilter">
+        <option value="">All Categories</option>
+        <option value="Men">Men</option>
+        <option value="Women">Women</option>
+        <option value="Kids">Kids</option>
+      </select>
+    </div>
+
+    <div id="productGrid" class="grid"></div>
     <div id="root"></div>
 
-    <!-- React Libraries -->
-<!-- React Libraries (must load BEFORE main script) -->
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- React -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    <!-- Main App Script (your original React logic, unchanged) -->
     <script>
-      (function(){
-        const { useState, useEffect } = React;
+    (function(){
+      const { useState, useEffect } = React;
 
-        const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxENH68uAePu7ORZJawjjXVqvTJfXB8gpBVNfizrdOmyURo8vu4edhr7h9BDc1SdSxlEg/exec';
-        const WHATSAPP_NUMBER_WITHOUT_PLUS = '919978653852';
-        const DRIVE_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbzQFujhLNbFusQfPxsHgQfoXAwcQz-caWSs0JAZDR9VdqEWY_PdKNIDi6ELvFQK03LG/exec';
+      const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxENH68uAePu7ORZJawjjXVqvTJfXB8gpBVNfizrdOmyURo8vu4edhr7h9BDc1SdSxlEg/exec';
+      const WHATSAPP_NUMBER_WITHOUT_PLUS = '919978653852';
+      const DRIVE_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbzQFujhLNbFusQfPxsHgQfoXAwcQz-caWSs0JAZDR9VdqEWY_PdKNIDi6ELvFQK03LG/exec';
 
-        async function fetchSheet() {
-          const res = await fetch(SHEET_URL);
-          const json = await res.json();
-          if (!json || !json.data) return [];
-          return json.data.map(row => ({ ...row }));
+      async function fetchSheet() {
+        const res = await fetch(SHEET_URL);
+        const json = await res.json();
+        return json.data || [];
+      }
+
+      function normalizeImageUrl(cell) {
+        if (!cell) return '';
+        let val = String(cell);
+        if (val.includes(',')) val = val.split(',')[0].trim();
+        if (val.includes('\n')) val = val.split('\n')[0].trim();
+        if (val.includes('raw.githubusercontent.com')) return val;
+        if (val.includes('github.com') && val.includes('/blob/'))
+          return val.replace('https://github.com/', 'https://raw.githubusercontent.com/').replace('/blob/', '/');
+        if (val.includes('drive.google.com/file/d/')) {
+          const id = val.split('/d/')[1].split('/')[0];
+          return `https://drive.google.com/uc?export=view&id=${id}`;
         }
+        return val;
+      }
 
-        function normalizeImageUrl(cell) {
-          if (!cell) return '';
-          let val = String(cell);
-          if (val.includes(',')) val = val.split(',')[0].trim();
-          if (val.includes('\n')) val = val.split('\n')[0].trim();
-          if (val.includes('raw.githubusercontent.com')) return val;
-          if (val.includes('github.com') && val.includes('/blob/')) {
-            return val.replace('https://github.com/', 'https://raw.githubusercontent.com/').replace('/blob/', '/');
-          }
-          if (val.includes('drive.google.com/open?id=')) {
-            const id = val.split('id=')[1].split('&')[0];
-            return `https://drive.google.com/uc?export=view&id=${id}`;
-          }
-          if (val.includes('drive.google.com/file/d/')) {
-            const id = val.split('/d/')[1].split('/')[0];
-            return `https://drive.google.com/uc?export=view&id=${id}`;
-          }
-          if (val.includes('drive.google.com/uc?export=view')) return val;
-          return val;
-        }
+      function App(){
+        const [products, setProducts] = useState([]);
+        const [filtered, setFiltered] = useState([]);
+        const [q, setQ] = useState('');
+        const [cat, setCat] = useState('All');
+        const [cartOpen, setCartOpen] = useState(false);
+        const [cart, setCart] = useState(()=>JSON.parse(localStorage.getItem('yf_cart')||'[]'));
 
-        function App() {
-          const [products, setProducts] = useState([]);
-          const [filtered, setFiltered] = useState([]);
-          const [categories, setCategories] = useState([]);
-          const [q, setQ] = useState('');
-          const [cat, setCat] = useState('All');
-          const [cartOpen, setCartOpen] = useState(false);
-          const [cart, setCart] = useState(() => {
-            try { return JSON.parse(localStorage.getItem('yf_cart') || '[]'); } catch(e) { return []; }
+        useEffect(()=>{ fetchSheet().then(rows=>{
+          const normalized = rows.map(r=>({
+            category: r.Category||r.category||'',
+            pname: r.Pname||r.pname||r.Product||'',
+            pdesc: r.Pdesc||r.pdesc||'',
+            psize: r.Psize||r.psize||'',
+            prate: r.Prate||r.prate||r.Price||'0',
+            pimage: normalizeImageUrl(r.Pimage||r.pimage||r.Image||'')
+          }));
+          setProducts(normalized); setFiltered(normalized);
+        }); },[]);
+
+        useEffect(()=>localStorage.setItem('yf_cart',JSON.stringify(cart)),[cart]);
+
+        useEffect(()=>{
+          const out = products.filter(d=>{
+            const matchQ=!q||d.pname.toLowerCase().includes(q.toLowerCase());
+            const matchC=(cat==='All')||(d.category===cat);
+            return matchQ&&matchC;
           });
+          setFiltered(out);
+        },[products,q,cat]);
 
-          useEffect(() => {
-            let mounted = true;
-            fetchSheet().then(rows => {
-              if (!mounted) return;
-              const normalized = rows.map(r => {
-                const imageCell = r.Pimage || r.pimage || r.Image || '';
-                return {
-                  category: (r.Category || '').toString(),
-                  pname: (r.Pname || '').toString(),
-                  pdesc: (r.Pdesc || '').toString(),
-                  psize: (r.Psize || '').toString(),
-                  prate: (r.Prate || '0').toString(),
-                  pimage: normalizeImageUrl(imageCell)
-                };
-              });
-              setProducts(normalized);
-              setFiltered(normalized);
-              const cats = Array.from(new Set(normalized.map(x => x.category || 'Uncategorized')));
-              setCategories(['All', ...cats]);
-            });
-            return () => { mounted = false };
-          }, []);
+        useEffect(()=>{
+          const btn=document.getElementById('openCartBtn');
+          btn.onclick=()=>setCartOpen(true);
+        },[]);
 
-          useEffect(() => {
-            localStorage.setItem('yf_cart', JSON.stringify(cart));
-          }, [cart]);
+        function addToCart(p){
+          const idx=cart.findIndex(c=>c.pname===p.pname);
+          if(idx>-1){const copy=cart.slice();copy[idx].qty+=1;setCart(copy);}
+          else setCart([...cart,{...p,qty:1}]);
+        }
+        function changeQty(it,delta){setCart(cart.map(c=>c===it?{...c,qty:Math.max(1,c.qty+delta)}:c));}
+        function removeFromCart(it){setCart(cart.filter(c=>c!==it));}
 
-          useEffect(() => {
-            const out = products.filter(d => {
-              const matchesQ = !q || (d.pname && d.pname.toLowerCase().includes(q.toLowerCase()));
-              const matchesCat = (cat === 'All') || (d.category === cat);
-              return matchesQ && matchesCat;
-            });
-            setFiltered(out);
-          }, [products, q, cat]);
-
-          function addToCart(item) {
-            const idx = cart.findIndex(c => c.pname === item.pname);
-            if (idx > -1) {
-              const copy = [...cart];
-              copy[idx].qty += 1;
-              setCart(copy);
-            } else {
-              setCart([...cart, { ...item, qty: 1 }]);
-            }
+        async function confirmFinalOrder(){
+          if(cart.length===0){alert('Cart empty');return;}
+          const {jsPDF}=window.jspdf;
+          const doc=new jsPDF({unit:'pt',format:'a4'});
+          let y=40;
+          doc.setFontSize(18);doc.text('Yes Fashion Hub - Order',40,y);y+=28;
+          const total=cart.reduce((s,i)=>s+(+i.prate*(i.qty||1)),0);
+          for(const item of cart){
+            let dataUrl=null;
+            if(item.pimage){try{const r=await fetch(item.pimage);if(r.ok){const b=await r.blob();dataUrl=await new Promise(res=>{const rd=new FileReader();rd.onload=()=>res(rd.result);rd.readAsDataURL(b);});}}catch{}}
+            if(dataUrl)try{doc.addImage(dataUrl,'JPEG',40,y,90,90);}catch{}
+            doc.setFontSize(12);
+            doc.text(item.pname||'',140,y+18);
+            doc.text(`Size: ${item.psize||'-'} | ₹${item.prate} x ${item.qty}`,140,y+36);
+            y+=110;if(y>720){doc.addPage();y=40;}
           }
+          doc.text(`Total Amount: ₹${total}`,40,y+10);
+          const pdfBlob=doc.output('blob');
+          const base64=await new Promise(r=>{const rd=new FileReader();rd.onloadend=()=>r(rd.result.split(',')[1]);rd.readAsDataURL(pdfBlob);});
+          const filename=`Order_${Date.now()}.pdf`;
+          const res=await fetch(DRIVE_UPLOAD_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({file:base64,filename})});
+          const json=await res.json();
+          if(!json.success){alert('Upload failed');return;}
+          const link=json.link;
+          let msg=`🛍️ Yes Fashion Hub - New Order\n\n`;
+          cart.forEach((c,i)=>msg+=`${i+1}. ${c.pname} | Qty: ${c.qty} | ₹${c.prate}\n`);
+          msg+=`\nTotal: ₹${total}\n\nOrder PDF: ${link}\n\nPlease confirm.`;
+          window.open(`https://wa.me/${WHATSAPP_NUMBER_WITHOUT_PLUS}?text=${encodeURIComponent(msg)}`,'_blank');
+          alert('Order uploaded and WhatsApp opened with link.');
+        }
 
-          function changeQty(item, delta) {
-            setCart(cart.map(c => c === item ? { ...c, qty: Math.max(1, c.qty + delta) } : c));
-          }
-
-          function removeFromCart(item) {
-            setCart(cart.filter(c => c !== item));
-          }
-
-          return React.createElement('div', null,
-            // ✅ Header inside React (live cart count)
-            React.createElement('header', null,
-              React.createElement('div', { className: 'logo-wrap' },
-                React.createElement('img', {
-                  src: 'https://raw.githubusercontent.com/yesfashionhub/yesfashionhub.github.io/main/cropped-yes-lOGO.webp',
-                  alt: 'Logo'
-                })
-              ),
-              React.createElement('div', { className: 'cart-wrap' },
-                React.createElement('button', { className: 'cart-btn', onClick: () => setCartOpen(true) }, '🛍️'),
-                React.createElement('span', { id: 'cartCount', className: 'cart-count' },
-                  cart.reduce((s, i) => s + i.qty, 0)
-                )
-              )
-            ),
-
-            // ✅ Filters below header
-            React.createElement('div', { className: 'controls' },
-              React.createElement('input', {
-                type: 'text',
-                placeholder: 'Search products...',
-                value: q,
-                onChange: e => setQ(e.target.value)
-              }),
-              React.createElement('select', {
-                value: cat,
-                onChange: e => setCat(e.target.value)
-              },
-                categories.map(c => React.createElement('option', { key: c, value: c }, c))
-              )
-            ),
-
-            // ✅ Product grid
-            React.createElement('div', { className: 'grid' },
-              filtered.map((p, idx) =>
-                React.createElement('div', { className: 'card', key: idx },
-                  React.createElement('img', { src: p.pimage || 'https://via.placeholder.com/400x300?text=No+Image', alt: p.pname }),
-                  React.createElement('h3', null, p.pname),
-                  React.createElement('p', null, p.pdesc),
-                  React.createElement('p', null, 'Size: ' + (p.psize || '-')),
-                  React.createElement('p', null, '₹' + (p.prate || '-')),
-                  React.createElement('button', { className: 'btn', onClick: () => addToCart(p) }, 'Add to cart')
-                )
-              )
-            ),
-
-            // ✅ Cart modal
-            cartOpen && React.createElement('div', { className: 'modal' },
-              React.createElement('div', { className: 'modal-content' },
-                React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
-                  React.createElement('h3', null, 'Your Cart'),
-                  React.createElement('div', null,
-                    React.createElement('button', { className: 'btn', onClick: () => alert('Order confirm flow same as before!') }, 'Confirm Final Order'),
-                    ' ',
-                    React.createElement('button', { className: 'btn', onClick: () => setCartOpen(false) }, 'Close')
-                  )
-                ),
-                cart.length === 0 ? React.createElement('div', null, 'Cart is empty') :
-                  React.createElement('div', null,
-                    cart.map((c, i) =>
-                      React.createElement('div', { className: 'cart-row', key: i },
-                        React.createElement('img', { src: c.pimage || 'https://via.placeholder.com/80', alt: c.pname }),
-                        React.createElement('div', { style: { flex: 1 } },
-                          React.createElement('div', { style: { fontWeight: 600 } }, c.pname),
-                          React.createElement('div', null, '₹' + c.prate + ' x ' + c.qty)
-                        ),
-                        React.createElement('div', null,
-                          React.createElement('button', { className: 'qty-btn', onClick: () => changeQty(c, 1) }, '+'),
-                          React.createElement('button', { className: 'qty-btn', onClick: () => changeQty(c, -1) }, '-'),
-                          React.createElement('button', { className: 'qty-btn', onClick: () => removeFromCart(c) }, 'Remove')
-                        )
-                      )
-                    ),
-                    React.createElement('div', { style: { textAlign: 'right', fontWeight: 700, marginTop: 10 } },
-                      `Total: ₹${cart.reduce((s, i) => s + (Number(i.prate || 0) * Number(i.qty || 1)), 0)}`
-                    )
-                  )
+        return React.createElement('div',null,
+          React.createElement('div',{className:'grid'},
+            filtered.map((p,idx)=>
+              React.createElement('div',{className:'card',key:idx},
+                React.createElement('img',{src:p.pimage||'https://via.placeholder.com/400x300?text=No+Image',alt:p.pname}),
+                React.createElement('h3',null,p.pname),
+                React.createElement('p',null,p.pdesc),
+                React.createElement('p',null,'Size: '+p.psize),
+                React.createElement('p',null,'₹'+p.prate),
+                React.createElement('button',{className:'btn',onClick:()=>addToCart(p)},'Add to Cart')
               )
             )
-          );
-        }
+          ),
+          cartOpen && React.createElement('div',{className:'modal'},
+            React.createElement('div',{className:'modal-content'},
+              React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
+                React.createElement('h3',null,'Your Cart'),
+                React.createElement('div',null,
+                  React.createElement('button',{className:'btn',onClick:confirmFinalOrder},'Confirm Final Order'),
+                  ' ',
+                  React.createElement('button',{className:'btn',onClick:()=>setCartOpen(false)},'Close')
+                )
+              ),
+              cart.length===0 ? React.createElement('div',null,'Cart is empty') :
+              React.createElement('div',null,
+                cart.map((c,i)=>
+                  React.createElement('div',{className:'cart-row',key:i},
+                    React.createElement('img',{src:c.pimage||'https://via.placeholder.com/80',alt:c.pname}),
+                    React.createElement('div',{style:{flex:1}},
+                      React.createElement('div',{style:{fontWeight:600}},c.pname),
+                      React.createElement('div',null,'₹'+c.prate+' x '+c.qty)
+                    ),
+                    React.createElement('div',null,
+                      React.createElement('button',{className:'qty-btn',onClick:()=>changeQty(c,1)},'+'),
+                      React.createElement('button',{className:'qty-btn',onClick:()=>changeQty(c,-1)},'-'),
+                      React.createElement('button',{className:'qty-btn',onClick:()=>removeFromCart(c)},'Remove')
+                    )
+                  )
+                ),
+                React.createElement('div',{style:{textAlign:'right',fontWeight:700,marginTop:10}},`Total: ₹${cart.reduce((s,i)=>s+(+i.prate*i.qty),0)}`)
+              )
+            )
+          )
+        );
+      }
 
-        ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
-      })();
+      ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+    })();
     </script>
   </body>
 </html>
