@@ -4,6 +4,9 @@
     <meta charset="utf-8" />
     <title>YesFashionHub - WhatsApp Store</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <meta http-equiv="Cache-Control" content="public, max-age=31536000">
+
 <style>
   * { box-sizing: border-box; }
 
@@ -474,7 +477,13 @@
         React.createElement('div',{className:'grid'},
             filtered.map((p, idx) =>
               React.createElement('div',{className:'card', key:idx},
-                React.createElement('img',{src: p.pimage || 'https://via.placeholder.com/400x300?text=No+Image', alt: p.pname}),
+              React.createElement('img',{
+                src: p.pimage || 'https://via.placeholder.com/400x300?text=No+Image',
+                alt: p.pname,
+                loading: 'lazy',
+                decoding: 'async',
+                style: { filter: 'brightness(0.98)' }
+              }),
                 React.createElement('h3', null, p.pname || 'Unnamed'),
                 React.createElement('p', null, p.pdesc),
                 React.createElement('p', null, 'Size: ' + (p.psize || '-')),
