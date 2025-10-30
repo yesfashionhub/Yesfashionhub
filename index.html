@@ -5,226 +5,221 @@
     <title>YesFashionHub - WhatsApp Store</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <style>
-      * {
-        box-sizing: border-box;
-      }
-    
-      body {
-        font-family: 'Inter', system-ui, Arial;
-        margin: 0;
-        background: #e5ddd5;
-        overflow-x: hidden;
-      }
-    
-      /* ===== HEADER BAR ===== */
-      header {
-        background: #25D366;
-        color: #fff;
-        padding: 10px 14px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      }
-    
-      .logo-wrap img {
-        height: 45px;
-        width: auto;
-        border-radius: 8px;
-      }
-    
-      /* ===== CART BUTTON ===== */
-      .cart-wrap {
-        position: relative;
-      }
-    
-      .cart-btn {
-        background: #128C7E;
-        border: none;
-        border-radius: 50%;
-        width: 42px;
-        height: 42px;
-        font-size: 20px;
-        color: #fff;
-        cursor: pointer;
-      }
-    
-      .cart-count {
-        position: absolute;
-        top: -5px;
-        right: -6px;
-        background: #ff3b30;
-        color: #fff;
-        border-radius: 50%;
-        font-size: 12px;
-        padding: 3px 6px;
-      }
-    
-      /* ===== TAGLINE ===== */
-      .tagline {
-        text-align: center;
-        background: #fff;
-        padding: 10px 0;
-        font-size: 16px;
-        font-weight: 600;
-        color: #128C7E;
-      }
-    
-      /* ===== SEARCH + FILTER ===== */
-      .controls {
-        background: #fff;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        padding: 12px;
-      }
-    
-      .controls input,
-      .controls select {
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        font-size: 15px;
-        width: 100%;
-      }
-    
-      /* ===== PRODUCT GRID ===== */
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 12px;
-        padding: 12px;
-      }
-    
-      .card {
-        background: #fff;
-        border-radius: 10px;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        transition: transform 0.2s ease;
-      }
-    
-      .card:hover {
-        transform: scale(1.02);
-      }
-    
-      .card img {
-        width: 100%;
-        height: 160px;
-        object-fit: cover;
-      }
-    
-      .card h3 {
-        margin: 10px 8px 0 8px;
-        font-size: 16px;
-        color: #222;
-      }
-    
-      .card p {
-        margin: 4px 8px;
-        font-size: 14px;
-        color: #555;
-      }
-    
-      .btn {
-        background: #25D366;
-        color: #fff;
-        border: none;
-        border-radius: 6px;
-        padding: 8px 12px;
-        cursor: pointer;
-        margin: 8px;
-        font-weight: 600;
-      }
-    
-      .btn:hover {
-        background: #20ba5a;
-      }
-    
-      /* ===== CART MODAL ===== */
-      .modal {
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.4);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 2000;
-      }
-    
-      .modal-content {
-        background: #fff;
-        border-radius: 10px;
-        padding: 16px;
-        width: 95%;
-        max-width: 700px;
-        max-height: 90vh;
-        overflow-y: auto;
-      }
-    
-      .cart-row {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        border-bottom: 1px solid #eee;
-        padding: 10px 0;
-      }
-    
-      .cart-row img {
-        width: 80px;
-        height: 80px;
-        border-radius: 8px;
-        object-fit: cover;
-      }
-    
-      .qty-btn {
-        background: #eee;
-        border: 1px solid #ccc;
-        padding: 4px 8px;
-        border-radius: 6px;
-        cursor: pointer;
-        margin: 0 3px;
-      }
-    
-      @media (max-width: 600px) {
-        header { padding: 8px 12px; }
-        .logo-wrap img { height: 38px; }
-        .cart-btn { width: 38px; height: 38px; font-size: 18px; }
-        .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
-      }
-    </style>
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', system-ui, Arial;
+    margin: 0;
+    background: #e5ddd5;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    background: #25D366;
+    color: #fff;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+
+  .logo-wrap img {
+    height: 42px;
+    width: auto;
+    border-radius: 8px;
+  }
+
+  .cart-wrap {
+    position: relative;
+  }
+
+  .cart-btn {
+    background: #128C7E;
+    border: none;
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    font-size: 20px;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .cart-count {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #ff3b30;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 12px;
+    padding: 3px 6px;
+  }
+
+  /* TAGLINE */
+  .tagline {
+    text-align: center;
+    background: #fff;
+    padding: 10px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #128C7E;
+  }
+
+  /* SEARCH + FILTER BELOW TAGLINE */
+  .controls {
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .controls input,
+  .controls select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 15px;
+    width: 100%;
+  }
+
+  /* PRODUCT GRID */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease;
+  }
+
+  .card:hover { transform: scale(1.02); }
+
+  .card img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+  }
+
+  .card h3 {
+    margin: 10px 8px 0;
+    font-size: 16px;
+    color: #222;
+  }
+
+  .card p {
+    margin: 4px 8px;
+    font-size: 14px;
+    color: #555;
+  }
+
+  .btn {
+    background: #25D366;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    margin: 8px;
+    font-weight: 600;
+  }
+
+  .btn:hover { background: #20ba5a; }
+
+  /* CART MODAL */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+  }
+
+  .modal-content {
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px;
+    width: 95%;
+    max-width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .cart-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding: 10px 0;
+  }
+
+  .cart-row img {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+
+  .qty-btn {
+    background: #eee;
+    border: 1px solid #ccc;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 0 3px;
+  }
+
+  @media (max-width: 600px) {
+    header { padding: 8px 12px; }
+    .logo-wrap img { height: 36px; }
+    .cart-btn { width: 38px; height: 38px; font-size: 18px; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  }
+</style>
+
 
   </head>
       <body>
     
-          <header>
-      <div class="logo-wrap">
-        <img src="logo.png" alt="Logo">
-      </div>
-      <div class="cart-wrap">
-        <button class="cart-btn" onclick="openCart()">🛒</button>
-        <span id="cartCount" class="cart-count">0</span>
-      </div>
-    </header>
-    
-    <div class="tagline">Hub of Fashion Wear</div>
-    
-    <div class="controls">
-      <input type="text" id="searchBox" placeholder="Search products...">
-      <select id="categoryFilter">
-        <option value="">All Categories</option>
-        <option value="Men">Men</option>
-        <option value="Women">Women</option>
-        <option value="Kids">Kids</option>
-      </select>
-    </div>
-    
-    <div id="productGrid" class="grid"></div>
+
+        <header>
+  <div class="logo-wrap">
+    <img src="logo.png" alt="Logo" />
+  </div>
+  <div class="cart-wrap">
+    <button class="cart-btn" onclick="openCart()">🛒</button>
+    <span id="cartCount" class="cart-count">0</span>
+  </div>
+</header>
+
+<div class="tagline">Hub of Fashion Wear</div>
+
+<div class="controls">
+  <input type="text" id="searchBox" placeholder="Search products..." />
+  <select id="categoryFilter">
+    <option value="">All Categories</option>
+    <option value="Men">Men</option>
+    <option value="Women">Women</option>
+    <option value="Kids">Kids</option>
+  </select>
+</div>
+
+<div id="productGrid" class="grid"></div>
 
 
 
