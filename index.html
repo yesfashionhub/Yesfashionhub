@@ -5,11 +5,7 @@
     <title>YesFashionHub - WhatsApp Store</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-    
-
-  </head>
-      <body>
-  <style>
+      <style>
   * { box-sizing: border-box; }
 
   body {
@@ -94,21 +90,9 @@
     .cart-btn { width: 42px; height: 42px; font-size: 20px; }
   }
 </style>  
-
-<header>
-  <div class="header-inner">
-    <div class="logo-wrap">
-      <img
-        src="https://raw.githubusercontent.com/yesfashionhub/yesfashionhub.github.io/main/cropped-yes-lOGO.webp"
-        alt="Logo"
-      />
-    </div>
-    <div class="cart-wrap">
-      <button class="cart-btn" onclick="openCart()">🛍️</button>
-      <span id="cartCount" class="cart-count">0</span>
-    </div>
-  </div>
-</header>
+    
+  </head>
+      <body>
 
 <div class="controls">
   <input type="text" id="searchBox" placeholder="Search products..." />
@@ -120,10 +104,21 @@
   </select>
 </div>
 
-<div id="productGrid" class="grid"></div>
-
-
-
+  <div id="productGrid" class="grid"></div>
+    <header>
+      <div class="header-inner">
+        <div class="logo-wrap">
+          <img
+            src="https://raw.githubusercontent.com/yesfashionhub/yesfashionhub.github.io/main/cropped-yes-lOGO.webp"
+            alt="Logo"
+          />
+        </div>
+        <div class="cart-wrap">
+          <button class="cart-btn" onclick="openCart()">🛍️</button>
+          <span id="cartCount" class="cart-count">0</span>
+        </div>
+      </div>
+    </header>
     
     <div id="root"></div>
     <!-- React -->
