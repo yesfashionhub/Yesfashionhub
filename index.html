@@ -259,49 +259,86 @@
             setTimeout(()=>btn.remove(),1500);
           }
      
-                function changeQty(it,delta){setCart(cart.map(c=>c===it?{...c,qty:Math.max(1,c.qty+delta)}:c));}
-                function removeFromCart(it){setCart(cart.filter(c=>c!==it));}
-                
-                async function confirmFinalOrder(){
-                  if(cart.length===0){alert('Cart empty');return;}
-                  const {jsPDF}=window.jspdf;
-                  const doc=new jsPDF({unit:'pt',format:'a4'});
-            // HEADER
-            doc.setFontSize(18);
-            doc.setTextColor(40);
-            doc.text('🛍️ Yes Fashion Hub', 40, 40);
-            doc.setFontSize(11);
-            doc.text('Order Confirmation Slip', 40, 60);
-            doc.setDrawColor(100);
-            doc.line(40, 70, 555, 70);
-        
-            // TABLE HEADER
-            let y = 95;
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'bold');
-            doc.text('No.', 45, y);
-            doc.text('Product Name', 75, y);
-            doc.text('Size', 290, y);
-            doc.text('Rate × Qty', 370, y);
-            doc.text('Total (₹)', 470, y);
-            doc.line(40, y + 5, 555, y + 5);
-        
-            // TABLE CONTENT
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(11);
-            let index = 1;
-            let totalt = 0;
-        
-            for (const item of cart) {
+          function changeQty(it,delta){setCart(cart.map(c=>c===it?{...c,qty:Math.max(1,c.qty+delta)}:c));}
+          function removeFromCart(it){setCart(cart.filter(c=>c!==it));}
+
+          // Confirm Final Order: generate PDF, upload to Drive, get link, open WhatsApp
+          async function confirmFinalOrder() {
+            if (cart.length === 0) {
+              alert("Cart empty");
+              return;
+            }
+          
+            // 🔹 Show processing overlay
+            const overlay = document.createElement("div");
+            overlay.id = "loadingOverlay";
+            overlay.style.position = "fixed";
+            overlay.style.top = 0;
+            overlay.style.left = 0;
+            overlay.style.width = "100%";
+            overlay.style.height = "100%";
+            overlay.style.background = "rgba(0,0,0,0.6)";
+            overlay.style.color = "#fff";
+            overlay.style.display = "flex";
+            overlay.style.flexDirection = "column";
+            overlay.style.justifyContent = "center";
+            overlay.style.alignItems = "center";
+            overlay.style.zIndex = "5000";
+            overlay.innerHTML = `
+              <div style="font-size:22px;font-weight:600;margin-bottom:12px;">⏳ Generating Order PDF...</div>
+              <div class="loader" style="border:6px solid #ccc;border-top:6px solid #25D366;border-radius:50%;width:60px;height:60px;animation:spin 1s linear infinite;"></div>
+              <style>@keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}</style>
+            `;
+            document.body.appendChild(overlay);
+          
+            try {
+              const { jsPDF } = window.jspdf;
+              const doc = new jsPDF({ unit: "pt", format: "a4" });
+              let y = 60;
+          
+              // Header
+              doc.setFontSize(20);
+              doc.setFont("helvetica", "bold");
+              doc.text("🛍️ Yes Fashion Hub", 40, y);
+              y += 20;
+              doc.setFontSize(12);
+              doc.setFont("helvetica", "normal");
+              doc.text("Order Confirmation Slip", 40, y);
               y += 30;
-              const lineTotal = (Number(item.prate || 0) * Number(item.qty || 1));
-              totalt += lineTotal;
-        
-              // Draw image (optional)
-              if (item.pimage) {
-                try {
-                  const resp = await fetch(item.pimage, { mode: 'cors' });
-                  if (resp.ok) {
+          
+              // Table header
+              doc.setFontSize(11);
+              doc.setFont("helvetica", "bold");
+              doc.text("No.", 40, y);
+              doc.text("Product Name", 70, y);
+              doc.text("Size", 260, y);
+              doc.text("Rate × Qty", 340, y);
+              doc.text("Total (₹)", 460, y);
+              y += 10;
+              doc.line(40, y, 540, y);
+              y += 15;
+          
+              let total = 0;
+          
+              // Table rows
+              for (let i = 0; i < cart.length; i++) {
+                const item = cart[i];
+                const rate = Number(item.prate || 0);
+                const qty = Number(item.qty || 1);
+                const rowTotal = rate * qty;
+                total += rowTotal;
+          
+                doc.setFont("helvetica", "normal");
+                doc.text(String(i + 1), 40, y);
+                doc.text(String(item.pname || "-"), 70, y, { maxWidth: 180 });
+                doc.text(String(item.psize || "-"), 260, y);
+                doc.text(`₹${rate} × ${qty}`, 340, y);
+                doc.text(`₹${rowTotal}`, 460, y);
+          
+                // 🔹 Bigger image 60×60
+                if (item.pimage && y < 700) {
+                  try {
+                    const resp = await fetch(item.pimage, { mode: "cors" });
                     const blob = await resp.blob();
                     const dataUrl = await new Promise((res, rej) => {
                       const reader = new FileReader();
@@ -309,76 +346,86 @@
                       reader.onerror = rej;
                       reader.readAsDataURL(blob);
                     });
-                    // fixed image size
-                    doc.addImage(dataUrl, 'JPEG', 42, y - 22, 28, 28);
-                  }
-                } catch(e) { /* ignore if image fails */ }
+                    doc.addImage(dataUrl, "JPEG", 520, y - 20, 60, 60);
+                  } catch {}
+                }
+          
+                y += 25;
+                if (y > 720) {
+                  doc.addPage();
+                  y = 60;
+                }
               }
-        
-              // Text
-              doc.text(String(index), 45, y);
-              doc.text(String(item.pname || '-').substring(0, 35), 75, y);
-              doc.text(String(item.psize || '-'), 295, y);
-              doc.text(`₹${item.prate} × ${item.qty}`, 365, y);
-              doc.text(`₹${lineTotal}`, 475, y);
-        
-              // Separator line
-              doc.setDrawColor(220);
-              doc.line(40, y + 6, 555, y + 6);
-        
-              index++;
-              if (y > 700) {
-                doc.addPage();
-                y = 80;
+          
+              // Grand Total
+              y += 10;
+              doc.line(40, y, 540, y);
+              y += 20;
+              doc.setFont("helvetica", "bold");
+              doc.text(`Grand Total: ₹${total}`, 400, y);
+          
+              // Footer
+              y += 40;
+              doc.setFontSize(10);
+              doc.setFont("helvetica", "italic");
+              doc.text("Thank you for shopping with Yes Fashion Hub!", 40, y);
+              y += 14;
+              doc.text("For queries, contact us on WhatsApp.", 40, y);
+          
+              // Convert PDF to base64
+              const pdfBlob = doc.output("blob");
+              const base64 = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result.split(",")[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(pdfBlob);
+              });
+          
+              // Upload to Drive
+              const filename = `Order_${Date.now()}.pdf`;
+              const res = await fetch(DRIVE_UPLOAD_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ file: base64, filename }),
+              });
+          
+              const json = await res.json();
+              if (!json || !json.success) {
+                alert("Upload failed. Please try again.");
+                return;
               }
+          
+              // WhatsApp message
+              const link = json.link;
+              let msgPlain = `🛍️ Yes Fashion Hub - New Order\n\n`;
+              cart.forEach((c, i) => {
+                msgPlain += `${i + 1}. ${c.pname} | Qty: ${c.qty} | ₹${c.prate}\n`;
+              });
+              msgPlain += `\nTotal: ₹${total}\n\nOrder PDF: ${link}\n\nPlease confirm.`;
+          
+              const waUrl = `https://wa.me/${WHATSAPP_NUMBER_WITHOUT_PLUS}?text=${encodeURIComponent(msgPlain)}`;
+              window.open(waUrl, "_blank");
+          
+              alert("✅ Order uploaded successfully!");
+              
+              // 🔹 Clear cart after order
+              setCart([]);
+              setCartOpen(false);
+          
+            } catch (err) {
+              console.error("confirmFinalOrder error", err);
+              alert("Error creating/uploading order. See console.");
+            } finally {
+              // 🔹 Hide loader
+              const overlay = document.getElementById("loadingOverlay");
+              if (overlay) overlay.remove();
             }
-        
-            // GRAND TOTAL SECTION
-            y += 40;
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(14);
-            doc.text('Grand Total:', 360, y);
-            doc.text(`₹${totalt}`, 475, y);
-            doc.setDrawColor(100);
-            doc.line(40, y + 10, 555, y + 10);
-        
-            y += 30;
-            doc.setFont('helvetica', 'italic');
-            doc.setFontSize(11);
-            doc.text('Thank you for shopping with Yes Fashion Hub!', 40, y);
-            doc.setFontSize(10);
-            doc.text('For queries, contact us on WhatsApp.', 40, y + 18);
-
+          }
 
 
           
-          doc.setFontSize(18);doc.text('Yes Fashion Hub - Order',40,y);y+=28;
-          const total=cart.reduce((s,i)=>s+(+i.prate*(i.qty||1)),0);
-          for(const item of cart){
-            let dataUrl=null;
-            if(item.pimage){try{const r=await fetch(item.pimage);if(r.ok){const b=await r.blob();dataUrl=await new Promise(res=>{const rd=new FileReader();rd.onload=()=>res(rd.result);rd.readAsDataURL(b);});}}catch{}}
-            if(dataUrl)try{doc.addImage(dataUrl,'JPEG',40,y,90,90);}catch{}
-            doc.setFontSize(12);
-            doc.text(item.pname||'',140,y+18);
-            doc.text(`Size: ${item.psize||'-'} | ₹${item.prate} x ${item.qty}`,140,y+36);
-            y+=110;if(y>720){doc.addPage();y=40;}
-          }
-          doc.text(`Total Amount: ₹${total}`,40,y+10);
-          const pdfBlob=doc.output('blob');
-          const base64=await new Promise(r=>{const rd=new FileReader();rd.onloadend=()=>r(rd.result.split(',')[1]);rd.readAsDataURL(pdfBlob);});
-          const filename=`Order_${Date.now()}.pdf`;
-          const res=await fetch(DRIVE_UPLOAD_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({file:base64,filename})});
-          const json=await res.json();
-          if(!json.success){alert('Upload failed');return;}
-          const link=json.link;
-          let msg=`🛍️ Yes Fashion Hub - New Order\n\n`;
-          cart.forEach((c,i)=>msg+=`${i+1}. ${c.pname} | Qty: ${c.qty} | ₹${c.prate}\n`);
-          msg+=`\nTotal: ₹${total}\n\nOrder PDF: ${link}\n\nPlease confirm.`;
-          window.open(`https://wa.me/${WHATSAPP_NUMBER_WITHOUT_PLUS}?text=${encodeURIComponent(msg)}`,'_blank');
-          alert('Order uploaded and WhatsApp opened with link.');
-        }
 
-        return React.createElement('div',null,
+          return React.createElement('div',null,
           React.createElement('div',{className:'grid'},
             filtered.map((p,idx)=>
               React.createElement('div',{className:'card',key:idx},
