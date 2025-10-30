@@ -259,14 +259,102 @@
             setTimeout(()=>btn.remove(),1500);
           }
      
-        function changeQty(it,delta){setCart(cart.map(c=>c===it?{...c,qty:Math.max(1,c.qty+delta)}:c));}
-        function removeFromCart(it){setCart(cart.filter(c=>c!==it));}
+                function changeQty(it,delta){setCart(cart.map(c=>c===it?{...c,qty:Math.max(1,c.qty+delta)}:c));}
+                function removeFromCart(it){setCart(cart.filter(c=>c!==it));}
+                
+                async function confirmFinalOrder(){
+                  if(cart.length===0){alert('Cart empty');return;}
+                  const {jsPDF}=window.jspdf;
+                  const doc=new jsPDF({unit:'pt',format:'a4'});
+                      const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ unit: 'pt', format: 'a4' });
         
-        async function confirmFinalOrder(){
-          if(cart.length===0){alert('Cart empty');return;}
-          const {jsPDF}=window.jspdf;
-          const doc=new jsPDF({unit:'pt',format:'a4'});
-          let y=40;
+            // HEADER
+            doc.setFontSize(18);
+            doc.setTextColor(40);
+            doc.text('🛍️ Yes Fashion Hub', 40, 40);
+            doc.setFontSize(11);
+            doc.text('Order Confirmation Slip', 40, 60);
+            doc.setDrawColor(100);
+            doc.line(40, 70, 555, 70);
+        
+            // TABLE HEADER
+            let y = 95;
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('No.', 45, y);
+            doc.text('Product Name', 75, y);
+            doc.text('Size', 290, y);
+            doc.text('Rate × Qty', 370, y);
+            doc.text('Total (₹)', 470, y);
+            doc.line(40, y + 5, 555, y + 5);
+        
+            // TABLE CONTENT
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(11);
+            let index = 1;
+            let total = 0;
+        
+            for (const item of cart) {
+              y += 30;
+              const lineTotal = (Number(item.prate || 0) * Number(item.qty || 1));
+              total += lineTotal;
+        
+              // Draw image (optional)
+              if (item.pimage) {
+                try {
+                  const resp = await fetch(item.pimage, { mode: 'cors' });
+                  if (resp.ok) {
+                    const blob = await resp.blob();
+                    const dataUrl = await new Promise((res, rej) => {
+                      const reader = new FileReader();
+                      reader.onload = () => res(reader.result);
+                      reader.onerror = rej;
+                      reader.readAsDataURL(blob);
+                    });
+                    // fixed image size
+                    doc.addImage(dataUrl, 'JPEG', 42, y - 22, 28, 28);
+                  }
+                } catch(e) { /* ignore if image fails */ }
+              }
+        
+              // Text
+              doc.text(String(index), 45, y);
+              doc.text(String(item.pname || '-').substring(0, 35), 75, y);
+              doc.text(String(item.psize || '-'), 295, y);
+              doc.text(`₹${item.prate} × ${item.qty}`, 365, y);
+              doc.text(`₹${lineTotal}`, 475, y);
+        
+              // Separator line
+              doc.setDrawColor(220);
+              doc.line(40, y + 6, 555, y + 6);
+        
+              index++;
+              if (y > 700) {
+                doc.addPage();
+                y = 80;
+              }
+            }
+        
+            // GRAND TOTAL SECTION
+            y += 40;
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.text('Grand Total:', 360, y);
+            doc.text(`₹${total}`, 475, y);
+            doc.setDrawColor(100);
+            doc.line(40, y + 10, 555, y + 10);
+        
+            y += 30;
+            doc.setFont('helvetica', 'italic');
+            doc.setFontSize(11);
+            doc.text('Thank you for shopping with Yes Fashion Hub!', 40, y);
+            doc.setFontSize(10);
+            doc.text('For queries, contact us on WhatsApp.', 40, y + 18);
+
+
+
+          
           doc.setFontSize(18);doc.text('Yes Fashion Hub - Order',40,y);y+=28;
           const total=cart.reduce((s,i)=>s+(+i.prate*(i.qty||1)),0);
           for(const item of cart){
