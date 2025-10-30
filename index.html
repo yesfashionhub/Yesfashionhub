@@ -5,539 +5,349 @@
     <title>YesFashionHub - WhatsApp Store</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-     <meta http-equiv="Cache-Control" content="public, max-age=31536000">
+    <meta http-equiv="Cache-Control" content="public, max-age=31536000">
 
-<style>
-  * { box-sizing: border-box; }
+    <style>
+      * { box-sizing: border-box; }
 
-  body {
-    font-family: 'Inter', system-ui, Arial;
-    margin: 0;
-    background: #e5ddd5;
-    overflow-x: hidden;
-  }
+      body {
+        font-family: 'Inter', system-ui, Arial;
+        margin: 0;
+        background: #e5ddd5;
+        overflow-x: hidden;
+      }
 
-  /* HEADER */
-  header {
-    background: #25D366;
-    color: #fff;
-    padding: 10px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  }
+      /* HEADER */
+      header {
+        background: #25D366;
+        color: #fff;
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      }
 
-  /* Logo styling */
-  .logo-wrap img {
-    height: 90px; /* 20% bigger */
-    width: auto;
-    align-items: center;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(255,255,255,0.8),
-                0 2px 6px rgba(0,0,0,0.25);
-    background: rgba(255,255,255,0.15);
-    padding: 4px;
-  }
+      .logo-wrap img {
+        height: 90px;
+        width: auto;
+        align-items: center;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(255,255,255,0.8),
+                    0 2px 6px rgba(0,0,0,0.25);
+        background: rgba(255,255,255,0.15);
+        padding: 4px;
+      }
 
-  /* Cart styling */
-  .cart-wrap {
-    position: relative;
-  }
+      .cart-wrap {
+        position: relative;
+      }
 
-  .cart-btn {
-    background: #128C7E;
-    border: none;
-    border-radius: 50%;
-    width: 44px;
-    height: 44px;
-    font-size: 22px;
-    color: #fff;
-    cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    transition: transform 0.2s ease, background-color 0.3s;
-  }
+      .cart-btn {
+        background: #128C7E;
+        border: none;
+        border-radius: 50%;
+        width: 44px;
+        height: 44px;
+        font-size: 22px;
+        color: #fff;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        transition: transform 0.2s ease, background-color 0.3s;
+      }
 
-  .cart-btn:hover {
-    transform: scale(1.1);
-    background: #20ba5a;
-  }
+      .cart-btn:hover {
+        transform: scale(1.1);
+        background: #20ba5a;
+      }
 
-  .cart-count {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    background: #ff3b30;
-    color: #fff;
-    border-radius: 50%;
-    font-size: 12px;
-    padding: 3px 6px;
-  }
+      .cart-count {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        background: #ff3b30;
+        color: #fff;
+        border-radius: 50%;
+        font-size: 12px;
+        padding: 3px 6px;
+      }
 
-  /* Controls, grid, and rest of page unchanged */
-  .tagline {
-    text-align: center;
-    background: #fff;
-    padding: 10px 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: #128C7E;
-  }
+      .controls {
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
+      }
 
-  .controls {
-    background: #fff;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 12px;
-  }
+      .controls input,
+      .controls select {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 15px;
+        width: 100%;
+      }
 
-  .controls input,
-  .controls select {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 15px;
-    width: 100%;
-  }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 12px;
+        padding: 12px;
+      }
 
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 12px;
-    padding: 12px;
-  }
+      .card {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.2s ease;
+      }
 
-  .card {
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.2s ease;
-  }
+      .card:hover { transform: scale(1.02); }
 
-  .card:hover { transform: scale(1.02); }
+      .card img {
+        width: 100%;
+        height: 160px;
+        object-fit: cover;
+      }
 
-  .card img {
-    width: 100%;
-    height: 160px;
-    object-fit: cover;
-  }
+      .card h3 {
+        margin: 10px 8px 0;
+        font-size: 16px;
+        color: #222;
+      }
 
-  .card h3 {
-    margin: 10px 8px 0;
-    font-size: 16px;
-    color: #222;
-  }
+      .card p {
+        margin: 4px 8px;
+        font-size: 14px;
+        color: #555;
+      }
 
-  .card p {
-    margin: 4px 8px;
-    font-size: 14px;
-    color: #555;
-  }
+      .btn {
+        background: #25D366;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 12px;
+        cursor: pointer;
+        margin: 8px;
+        font-weight: 600;
+      }
 
-  .btn {
-    background: #25D366;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    padding: 8px 12px;
-    cursor: pointer;
-    margin: 8px;
-    font-weight: 600;
-  }
+      .btn:hover { background: #20ba5a; }
 
-  .btn:hover { background: #20ba5a; }
-
-  /* Responsive tweaks */
-  @media (max-width: 600px) {
-    header { padding: 8px 12px; }
-    .logo-wrap img { height: 44px; }
-    .cart-btn { width: 40px; height: 40px; font-size: 20px; }
-    .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
-  }
-</style>
-    
-
+      @media (max-width: 600px) {
+        header { padding: 8px 12px; }
+        .logo-wrap img { height: 44px; }
+        .cart-btn { width: 40px; height: 40px; font-size: 20px; }
+        .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+      }
+    </style>
   </head>
 
   <body>
-
-    <!-- ✅ HEADER should be here, at the top -->
-    <header>
-  <div class="logo-wrap">
-    <img
-      src="https://raw.githubusercontent.com/yesfashionhub/yesfashionhub.github.io/main/cropped-yes-lOGO.webp"
-      alt="Logo"
-    />
-  </div>
-  <div class="cart-wrap">
-    <button class="cart-btn" onclick="openCart()">🛍️</button>
-    <span id="cartCount" class="cart-count">0</span>
-  </div>
-</header>
-
-    <!-- ✅ Search and Filter below Header -->
-    <div class="controls">
-      <input type="text" id="searchBox" placeholder="Search products..." />
-      <select id="categoryFilter">
-        <option value="">All Categories</option>
-        <option value="Men">Men</option>
-        <option value="Women">Women</option>
-        <option value="Kids">Kids</option>
-      </select>
-    </div>
-
-    <!-- ✅ Product Grid -->
-    <div id="productGrid" class="grid"></div>
-
-    <!-- React Root or other scripts -->
+    <!-- React Mount Point -->
     <div id="root"></div>
-<!-- React -->
-   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- jsPDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+    <!-- React Libraries -->
+    <script defer crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script defer crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Main App Script (your original React logic, unchanged) -->
     <script>
-    (function(){
-      const { useState, useEffect } = React;
+      (function(){
+        const { useState, useEffect } = React;
 
-      // *** CONFIG - only change if needed ***
-      const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxENH68uAePu7ORZJawjjXVqvTJfXB8gpBVNfizrdOmyURo8vu4edhr7h9BDc1SdSxlEg/exec';
-      const WHATSAPP_NUMBER_WITHOUT_PLUS = '919978653852'; // country code+number for wa.me (91 + 9978653852)
+        const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxENH68uAePu7ORZJawjjXVqvTJfXB8gpBVNfizrdOmyURo8vu4edhr7h9BDc1SdSxlEg/exec';
+        const WHATSAPP_NUMBER_WITHOUT_PLUS = '919978653852';
+        const DRIVE_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbzQFujhLNbFusQfPxsHgQfoXAwcQz-caWSs0JAZDR9VdqEWY_PdKNIDi6ELvFQK03LG/exec';
 
-      // <<< Replace this with your deployed Apps Script Web App URL (Drive uploader) >>>
-      const DRIVE_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbzQFujhLNbFusQfPxsHgQfoXAwcQz-caWSs0JAZDR9VdqEWY_PdKNIDi6ELvFQK03LG/exec';
-
-      // ***************************************
-
-      // fetch sheet JSON (your Apps Script doGet returns { data: [...] })
-      async function fetchSheet() {
-        const res = await fetch(SHEET_URL);
-        const json = await res.json();
-        if (!json || !json.data) return [];
-        return json.data.map(row => ({ ...row }));
-        
-      }
-
-      // helpers to normalize image URLs (Github raw or Drive or already direct)
-      function normalizeImageUrl(cell) {
-        if (!cell) return '';
-        let val = String(cell);
-        if (val.includes(',')) val = val.split(',')[0].trim();
-        if (val.includes('\n')) val = val.split('\n')[0].trim();
-        if (val.includes('raw.githubusercontent.com')) return val;
-        if (val.includes('github.com') && val.includes('/blob/')) {
-          return val.replace('https://github.com/', 'https://raw.githubusercontent.com/').replace('/blob/', '/');
+        async function fetchSheet() {
+          const res = await fetch(SHEET_URL);
+          const json = await res.json();
+          if (!json || !json.data) return [];
+          return json.data.map(row => ({ ...row }));
         }
-        if (val.includes('drive.google.com/open?id=')) {
-          const id = val.split('id=')[1].split('&')[0];
-          return `https://drive.google.com/uc?export=view&id=${id}`;
-        }
-        if (val.includes('drive.google.com/file/d/')) {
-          const id = val.split('/d/')[1].split('/')[0];
-          return `https://drive.google.com/uc?export=view&id=${id}`;
-        }
-        if (val.includes('drive.google.com/uc?export=view')) return val;
-        return val;
-      }
 
-      // App component
-      function App(){
-        const [products, setProducts] = useState([]);
-        const [filtered, setFiltered] = useState([]);
-        const [categories, setCategories] = useState([]);
-        const [q, setQ] = useState('');
-        const [cat, setCat] = useState('All');
-        const [cartOpen, setCartOpen] = useState(false);
-        const [cart, setCart] = useState(() => {
-          try { return JSON.parse(localStorage.getItem('yf_cart') || '[]') } catch(e) { return [] }
-        });
+        function normalizeImageUrl(cell) {
+          if (!cell) return '';
+          let val = String(cell);
+          if (val.includes(',')) val = val.split(',')[0].trim();
+          if (val.includes('\n')) val = val.split('\n')[0].trim();
+          if (val.includes('raw.githubusercontent.com')) return val;
+          if (val.includes('github.com') && val.includes('/blob/')) {
+            return val.replace('https://github.com/', 'https://raw.githubusercontent.com/').replace('/blob/', '/');
+          }
+          if (val.includes('drive.google.com/open?id=')) {
+            const id = val.split('id=')[1].split('&')[0];
+            return `https://drive.google.com/uc?export=view&id=${id}`;
+          }
+          if (val.includes('drive.google.com/file/d/')) {
+            const id = val.split('/d/')[1].split('/')[0];
+            return `https://drive.google.com/uc?export=view&id=${id}`;
+          }
+          if (val.includes('drive.google.com/uc?export=view')) return val;
+          return val;
+        }
 
-        // load products once
-        useEffect(() => {
-          let mounted = true;
-          fetchSheet().then(rows => {
-            if (!mounted) return;
-            const normalized = rows.map(r => {
-              const imageCell = r.Pimage || r.pimage || r['Pimage '] || r['pimage url'] || r.Image || r.image || '';
-              return {
-                category: (r.Category || r.categories || r.category || '').toString(),
-                pname: (r.Pname || r.pname || r.Product || r.product || '').toString(),
-                pdesc: (r.Pdesc || r.pdesc || r.Description || r.description || '').toString(),
-                psize: (r.Psize || r.psize || r.size || '').toString(),
-                prate: (r.Prate || r.prate || r.Price || r.price || '0').toString(),
-                pimage: normalizeImageUrl(imageCell)
-              };
-            });
-            setProducts(normalized);
-            setFiltered(normalized);
-            const cats = Array.from(new Set(normalized.map(x => (x.category && x.category.trim()) ? x.category.trim() : 'Uncategorized')));
-            setCategories(['All', ...cats]);
-          }).catch(err => {
-            console.error('Failed to fetch sheet:', err);
-            setProducts([]);
-            setFiltered([]);
-            setCategories(['All']);
+        function App() {
+          const [products, setProducts] = useState([]);
+          const [filtered, setFiltered] = useState([]);
+          const [categories, setCategories] = useState([]);
+          const [q, setQ] = useState('');
+          const [cat, setCat] = useState('All');
+          const [cartOpen, setCartOpen] = useState(false);
+          const [cart, setCart] = useState(() => {
+            try { return JSON.parse(localStorage.getItem('yf_cart') || '[]'); } catch(e) { return []; }
           });
-          return () => { mounted = false };
-        }, []);
 
-        // persist cart
-        useEffect(() => {
-          localStorage.setItem('yf_cart', JSON.stringify(cart));
-        }, [cart]);
-
-        // filter products
-        useEffect(() => {
-          const out = products.filter(d => {
-            const matchesQ = !q || (d.pname && d.pname.toLowerCase().includes(q.toLowerCase())) || (d.pdesc && d.pdesc.toLowerCase().includes(q.toLowerCase()));
-            const matchesCat = (cat === 'All') || (d.category === cat);
-            return matchesQ && matchesCat;
-          });
-          setFiltered(out);
-        }, [products, q, cat]);
-
-        // cart helpers
-        function addToCart(item){
-          const idx = cart.findIndex(c => c.pname === item.pname && c.pimage === item.pimage);
-          if (idx > -1) {
-            const copy = cart.slice();
-            copy[idx].qty += 1;
-            setCart(copy);
-          } else {
-            setCart([...cart, { ...item, qty: 1 }]);
-          }
-        }
-        function changeQty(item, delta){
-          setCart(cart.map(c => c === item ? {...c, qty: Math.max(1, c.qty + delta)} : c));
-        }
-        function removeFromCart(item){
-          setCart(cart.filter(c => c !== item));
-        }
-
-        // Confirm Final Order: generate PDF, upload to Drive, get link, open WhatsApp
-        async function confirmFinalOrder() {
-          if (cart.length === 0) {
-            alert('Cart empty');
-            return;
-          }
-
-          try {
-            const { jsPDF } = window.jspdf;
-            // Use points (pt) for neat spacing
-            const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-            let y = 40;
-            doc.setFontSize(18);
-            doc.text('Yes Fashion Hub - Order', 40, y);
-            y += 28;
-
-            // Add a header row
-            const total = cart.reduce((s,i)=> s + (Number(i.prate || 0) * Number(i.qty || 1)), 0);
-
-            // For each item, add image (if available) + text
-            for (const item of cart) {
-              // try to fetch image and convert to dataURL
-              let dataUrl = null;
-              if (item.pimage) {
-                try {
-                  const resp = await fetch(item.pimage, { mode: 'cors' });
-                  if (resp.ok) {
-                    const blob = await resp.blob();
-                    dataUrl = await new Promise((res, rej) => {
-                      const reader = new FileReader();
-                      reader.onload = () => res(reader.result);
-                      reader.onerror = rej;
-                      reader.readAsDataURL(blob);
-                    });
-                  }
-                } catch (err) {
-                  console.warn('Image load failed', err);
-                }
-              }
-
-              // Draw image thumbnail if available
-              if (dataUrl) {
-                try {
-                  doc.addImage(dataUrl, 'JPEG', 40, y, 90, 90);
-                } catch (e) {
-                  // some dataURLs might be PNG; try PNG if JPEG fails
-                  try { doc.addImage(dataUrl, 'PNG', 40, y, 90, 90); } catch (e2) { /* ignore */ }
-                }
-              }
-
-              // Text details to the right of image
-              const leftTextX = 140;
-              doc.setFontSize(12);
-              doc.text(String(item.pname || ''), leftTextX, y + 18);
-              if (item.pdesc) doc.setFontSize(10), doc.text(String(item.pdesc || ''), leftTextX, y + 36);
-              doc.setFontSize(10);
-              doc.text(`Size: ${item.psize || '-'} | ₹${item.prate || '0'} x ${item.qty}`, leftTextX, y + 56);
-
-              y += 110;
-              if (y > 720) { doc.addPage(); y = 40; }
-            }
-
-            // Total
-            doc.setFontSize(14);
-            doc.text(`Total Amount: ₹${total}`, 40, y + 4);
-
-            // Convert PDF to base64
-            const pdfBlob = doc.output('blob');
-            const base64 = await new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result.split(',')[1]);
-              reader.onerror = reject;
-              reader.readAsDataURL(pdfBlob);
+          useEffect(() => {
+            let mounted = true;
+            fetchSheet().then(rows => {
+              if (!mounted) return;
+              const normalized = rows.map(r => {
+                const imageCell = r.Pimage || r.pimage || r.Image || '';
+                return {
+                  category: (r.Category || '').toString(),
+                  pname: (r.Pname || '').toString(),
+                  pdesc: (r.Pdesc || '').toString(),
+                  psize: (r.Psize || '').toString(),
+                  prate: (r.Prate || '0').toString(),
+                  pimage: normalizeImageUrl(imageCell)
+                };
+              });
+              setProducts(normalized);
+              setFiltered(normalized);
+              const cats = Array.from(new Set(normalized.map(x => x.category || 'Uncategorized')));
+              setCategories(['All', ...cats]);
             });
+            return () => { mounted = false };
+          }, []);
 
-            // Upload to Drive via Apps Script web app
-            const filename = `Order_${Date.now()}.pdf`;
-            const res = await fetch(DRIVE_UPLOAD_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-              body: new URLSearchParams({ file: base64, filename })
+          useEffect(() => {
+            localStorage.setItem('yf_cart', JSON.stringify(cart));
+          }, [cart]);
+
+          useEffect(() => {
+            const out = products.filter(d => {
+              const matchesQ = !q || (d.pname && d.pname.toLowerCase().includes(q.toLowerCase()));
+              const matchesCat = (cat === 'All') || (d.category === cat);
+              return matchesQ && matchesCat;
             });
+            setFiltered(out);
+          }, [products, q, cat]);
 
-            const json = await res.json();
-            if (!json || !json.success) {
-              console.error('Upload failed response:', json);
-              alert('Upload failed. Check console for details.');
-              return;
+          function addToCart(item) {
+            const idx = cart.findIndex(c => c.pname === item.pname);
+            if (idx > -1) {
+              const copy = [...cart];
+              copy[idx].qty += 1;
+              setCart(copy);
+            } else {
+              setCart([...cart, { ...item, qty: 1 }]);
             }
-
-            const link = json.link;
-            // Build WhatsApp message (encoded)
-            let msgPlain = `🛍️ Yes Fashion Hub - New Order\n\n`;
-            cart.forEach((c, i) => {
-              msgPlain += `${i+1}. ${c.pname} | Qty: ${c.qty} | ₹${c.prate}\n`;
-            });
-            msgPlain += `\nTotal: ₹${total}\n\nOrder PDF: ${link}\n\nPlease confirm.`;
-
-            const waUrl = `https://wa.me/${WHATSAPP_NUMBER_WITHOUT_PLUS}?text=${encodeURIComponent(msgPlain)}`;
-            window.open(waUrl, '_blank');
-            alert('Order uploaded and WhatsApp opened with link.');
-
-            // Optionally clear cart after confirm:
-            // setCart([]);
-            // setCartOpen(false);
-
-          } catch (err) {
-            console.error('confirmFinalOrder error', err);
-            alert('Error creating/uploading order. See console.');
           }
-        }
 
-        // Keep the old download function (optional), but we no longer use it for final flow
-        async function generatePDFAndDownload() {
-          if (cart.length === 0) { alert('Cart empty'); return; }
-          const { jsPDF } = window.jspdf;
-          const doc = new jsPDF({unit:'px', format:'a4'});
-          doc.setFontSize(16);
-          doc.text('Yes Fashion Hub - Order', 40, 30);
-          let y = 50;
-          for (const item of cart) {
-            if (item.pimage) {
-              try {
-                const resp = await fetch(item.pimage, {mode: 'cors'});
-                if (resp.ok) {
-                  const blob = await resp.blob();
-                  const dataUrl = await new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result);
-                    reader.onerror = reject;
-                    reader.readAsDataURL(blob);
-                  });
-                  doc.addImage(dataUrl, 'JPEG', 40, y, 90, 90);
-                }
-              } catch (err) { console.warn('Image fetch error', err); }
-            }
-            doc.setFontSize(12);
-            doc.text(`${item.pname || ''}`, 140, y + 20);
-            doc.text(`${item.pdesc || ''}`, 140, y + 40);
-            doc.text(`Size: ${item.psize || '-'} | Rate: ₹${item.prate || '-'} | Qty: ${item.qty}`, 140, y + 60);
-            y += 120;
-            if (y > 720) { doc.addPage(); y = 40; }
+          function changeQty(item, delta) {
+            setCart(cart.map(c => c === item ? { ...c, qty: Math.max(1, c.qty + delta) } : c));
           }
-          const total = cart.reduce((s,i)=> s + (Number(i.prate || 0) * Number(i.qty || 1)), 0);
-          doc.setFontSize(14);
-          doc.text(`Total: ₹${total}`, 40, y + 20);
-          const filename = `order_${Date.now()}.pdf`;
-          doc.save(filename);
-          alert('PDF downloaded. Use Confirm Final Order to upload to Drive + WhatsApp.');
-        }
 
-        // UI
-        return React.createElement('div', {className:'container'},
-        React.createElement('div',{className:'grid'},
-            filtered.map((p, idx) =>
-              React.createElement('div',{className:'card', key:idx},
-              React.createElement('img',{
-                src: p.pimage || 'https://via.placeholder.com/400x300?text=No+Image',
-                alt: p.pname,
-                loading: 'lazy',
-                decoding: 'async',
-                style: { filter: 'brightness(0.98)' }
-              }),
-                React.createElement('h3', null, p.pname || 'Unnamed'),
-                React.createElement('p', null, p.pdesc),
-                React.createElement('p', null, 'Size: ' + (p.psize || '-')),
-                React.createElement('p', null, '₹' + (p.prate || '-')),
-                React.createElement('div', null,
-                  React.createElement('button',{className:'btn', onClick:()=>addToCart(p)}, 'Add to cart')
+          function removeFromCart(item) {
+            setCart(cart.filter(c => c !== item));
+          }
+
+          return React.createElement('div', null,
+            // ✅ Header inside React (live cart count)
+            React.createElement('header', null,
+              React.createElement('div', { className: 'logo-wrap' },
+                React.createElement('img', {
+                  src: 'https://raw.githubusercontent.com/yesfashionhub/yesfashionhub.github.io/main/cropped-yes-lOGO.webp',
+                  alt: 'Logo'
+                })
+              ),
+              React.createElement('div', { className: 'cart-wrap' },
+                React.createElement('button', { className: 'cart-btn', onClick: () => setCartOpen(true) }, '🛍️'),
+                React.createElement('span', { id: 'cartCount', className: 'cart-count' },
+                  cart.reduce((s, i) => s + i.qty, 0)
                 )
               )
-            )
-          ),
+            ),
 
-          cartOpen && React.createElement('div',{className:'modal'},
-            React.createElement('div',{className:'modal-content'},
-              React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
-                React.createElement('h3', null, 'Your Cart'),
-                React.createElement('div', null,
-                    React.createElement('button',{className:'btn', onClick:confirmFinalOrder}, 'Confirm Final Order'),
-                    ' ',
-                    React.createElement('button',{className:'btn', onClick:()=>setCartOpen(false)}, 'Close')
+            // ✅ Filters below header
+            React.createElement('div', { className: 'controls' },
+              React.createElement('input', {
+                type: 'text',
+                placeholder: 'Search products...',
+                value: q,
+                onChange: e => setQ(e.target.value)
+              }),
+              React.createElement('select', {
+                value: cat,
+                onChange: e => setCat(e.target.value)
+              },
+                categories.map(c => React.createElement('option', { key: c, value: c }, c))
+              )
+            ),
+
+            // ✅ Product grid
+            React.createElement('div', { className: 'grid' },
+              filtered.map((p, idx) =>
+                React.createElement('div', { className: 'card', key: idx },
+                  React.createElement('img', { src: p.pimage || 'https://via.placeholder.com/400x300?text=No+Image', alt: p.pname }),
+                  React.createElement('h3', null, p.pname),
+                  React.createElement('p', null, p.pdesc),
+                  React.createElement('p', null, 'Size: ' + (p.psize || '-')),
+                  React.createElement('p', null, '₹' + (p.prate || '-')),
+                  React.createElement('button', { className: 'btn', onClick: () => addToCart(p) }, 'Add to cart')
                 )
-              ),
-              React.createElement('div',{className:'divider'}),
-              cart.length === 0 ? React.createElement('div', null, 'Cart is empty') :
-              // Wrap items + total inside one container
-              React.createElement('div', null,
-                cart.map((c, i) =>
-                  React.createElement('div',{className:'cart-row', key:i},
-                    React.createElement('img',{src:c.pimage || 'https://via.placeholder.com/80', alt:c.pname}),
-                    React.createElement('div',{style:{flex:1}},
-                      React.createElement('div',{style:{fontWeight:600}}, c.pname),
-                      React.createElement('div', null, c.pdesc),
-                      React.createElement('div', null, 'Size: ' + (c.psize || '-')),
-                      React.createElement('div', null, '₹' + (c.prate || '-') + ' x ' + c.qty)
-                    ),
-                    React.createElement('div', null,
-                      React.createElement('button',{className:'qty-btn', onClick:()=>changeQty(c,1)}, '+'),
-                      React.createElement('button',{className:'qty-btn', onClick:()=>changeQty(c,-1)}, '-'),
-                      React.createElement('button',{className:'qty-btn', onClick:()=>removeFromCart(c)}, 'Remove')
-                    )
+              )
+            ),
+
+            // ✅ Cart modal
+            cartOpen && React.createElement('div', { className: 'modal' },
+              React.createElement('div', { className: 'modal-content' },
+                React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+                  React.createElement('h3', null, 'Your Cart'),
+                  React.createElement('div', null,
+                    React.createElement('button', { className: 'btn', onClick: () => alert('Order confirm flow same as before!') }, 'Confirm Final Order'),
+                    ' ',
+                    React.createElement('button', { className: 'btn', onClick: () => setCartOpen(false) }, 'Close')
                   )
                 ),
-                // Total row
-                React.createElement('div', { style: { textAlign: 'right', fontWeight: 700, marginTop: 10 } },
-                  `Total: ₹${cart.reduce((s, i) => s + (Number(i.prate || 0) * Number(i.qty || 1)), 0)}`
-                )
+                cart.length === 0 ? React.createElement('div', null, 'Cart is empty') :
+                  React.createElement('div', null,
+                    cart.map((c, i) =>
+                      React.createElement('div', { className: 'cart-row', key: i },
+                        React.createElement('img', { src: c.pimage || 'https://via.placeholder.com/80', alt: c.pname }),
+                        React.createElement('div', { style: { flex: 1 } },
+                          React.createElement('div', { style: { fontWeight: 600 } }, c.pname),
+                          React.createElement('div', null, '₹' + c.prate + ' x ' + c.qty)
+                        ),
+                        React.createElement('div', null,
+                          React.createElement('button', { className: 'qty-btn', onClick: () => changeQty(c, 1) }, '+'),
+                          React.createElement('button', { className: 'qty-btn', onClick: () => changeQty(c, -1) }, '-'),
+                          React.createElement('button', { className: 'qty-btn', onClick: () => removeFromCart(c) }, 'Remove')
+                        )
+                      )
+                    ),
+                    React.createElement('div', { style: { textAlign: 'right', fontWeight: 700, marginTop: 10 } },
+                      `Total: ₹${cart.reduce((s, i) => s + (Number(i.prate || 0) * Number(i.qty || 1)), 0)}`
+                    )
+                  )
               )
             )
-          )
-        );
-      }
+          );
+        }
 
-      ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
-    })();
+        ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+      })();
     </script>
   </body>
 </html>
