@@ -111,411 +111,140 @@
       const DRIVE_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbzQFujhLNbFusQfPxsHgQfoXAwcQz-caWSs0JAZDR9VdqEWY_PdKNIDi6ELvFQK03LG/exec';
       const WHATSAPP_NUMBER_WITHOUT_PLUS = '919978653852';
 
-      // fetch sheet rows
-      async function fetchSheet() {
-        try {
-          const res = await fetch(SHEET_URL);
-          const json = await res.json();
-          return json.data || [];
-        } catch (e) {
-          console.error('fetchSheet error', e);
-          return [];
-        }
-      }
+  function App(){
+    const [products, setProducts] = useState([]);
+    const [filtered, setFiltered] = useState([]);
+    const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem('yf_cart') || '[]'));
+    const [cartOpen, setCartOpen] = useState(false);
+    const [userName, setUserName] = useState('');
+    const [userCity, setUserCity] = useState('');
+    const [showPopup, setShowPopup] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-      function normalizeImageUrl(cell) {
-        if (!cell) return '';
-        let val = String(cell);
-        if (val.includes(',')) val = val.split(',')[0].trim();
-        if (val.includes('\n')) val = val.split('\n')[0].trim();
-        if (val.includes('raw.githubusercontent.com')) return val;
-        if (val.includes('github.com') && val.includes('/blob/')) return val.replace('https://github.com/', 'https://raw.githubusercontent.com/').replace('/blob/', '/');
-        if (val.includes('drive.google.com/open?id=')) {
-          const id = val.split('id=')[1].split('&')[0];
-          return `https://drive.google.com/uc?export=view&id=${id}`;
-        }
-        if (val.includes('drive.google.com/file/d/')) {
-          const id = val.split('/d/')[1].split('/')[0];
-          return `https://drive.google.com/uc?export=view&id=${id}`;
-        }
-        return val;
-      }
+    useEffect(() => {
+      localStorage.setItem('yf_cart', JSON.stringify(cart));
+    }, [cart]);
 
-      // App
-      function App(){
-        const [products, setProducts] = useState([]);
-        const [filtered, setFiltered] = useState([]);
-        const [q, setQ] = useState('');
-        const [cat, setCat] = useState('All');
-        const [cartOpen, setCartOpen] = useState(false);
-        const [cart, setCart] = useState(()=> {
-          try { return JSON.parse(localStorage.getItem('yf_cart') || '[]') } catch(e){ return [] }
+    // --- Add to cart function
+    function addToCart(item){
+      const idx = cart.findIndex(c => c.pname === item.pname);
+      if (idx > -1) {
+        const copy = [...cart];
+        copy[idx].qty += 1;
+        setCart(copy);
+      } else {
+        setCart([...cart, { ...item, qty: 1 }]);
+      }
+      alert('✅ Product added to cart!');
+    }
+
+    // --- Generate Cart Screenshot
+    async function generateCartImage(){
+      const target = document.querySelector('.modal-content') || document.body;
+      await new Promise(r => setTimeout(r, 800)); // wait for UI render
+
+      const canvas = await html2canvas(target, {
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        scale: 2
+      });
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+      return dataUrl.split(',')[1];
+    }
+
+    // --- Upload to Drive
+    async function uploadToDrive(base64, filename){
+      const res = await fetch(DRIVE_UPLOAD_URL, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: new URLSearchParams({ file: base64, filename })
+      });
+      const json = await res.json();
+      return json.link;
+    }
+
+    // --- Confirm Checkout Flow
+    async function handleCheckoutConfirm(){
+      if (!userName || !userCity) {
+        alert('Please enter your Name and City');
+        return;
+      }
+      setShowPopup(false);
+      setLoading(true);
+
+      try {
+        const base64 = await generateCartImage();
+        const link = await uploadToDrive(base64, `Order_${Date.now()}.jpg`);
+        
+        const total = cart.reduce((s, i) => s + (Number(i.prate) * i.qty), 0);
+        let msg = `🛍️ YES FASHION HUB - NEW ORDER\n\nCustomer: ${userName}\nCity: ${userCity}\n\nItems:\n`;
+        cart.forEach((c, i) => {
+          msg += `${i+1}. ${c.pname} | ₹${c.prate} x ${c.qty}\n`;
         });
+        msg += `\nTotal: ₹${total}\n\n🖼️ Cart Image: ${link}`;
 
-        // when cart changes, persist and update badge by total qty
-        useEffect(()=>{
-          localStorage.setItem('yf_cart', JSON.stringify(cart));
-          const badge = document.getElementById('cartCount');
-          if (badge) {
-            const totalQty = cart.reduce((s,i)=> s + (Number(i.qty||0)), 0);
-            badge.textContent = totalQty || 0;
-          }
-        }, [cart]);
+        const waUrl = `https://wa.me/${WHATSAPP_NUMBER_WITHOUT_PLUS}?text=${encodeURIComponent(msg)}`;
+        window.open(waUrl, '_blank');
 
-        // fetch on load
-        useEffect(()=> {
-          let mounted = true;
-          fetchSheet().then(rows=>{
-            if(!mounted) return;
-            const normalized = rows.map(r=>({
-              category: (r.Category||r.category||'').toString(),
-              pname: (r.Pname||r.pname||r.Product||'').toString(),
-              pdesc: (r.Pdesc||r.pdesc||r.Description||'').toString(),
-              psize: (r.Psize||r.psize||r.size||'').toString(),
-              prate: (r.Prate||r.prate||r.Price||'0').toString(),
-              pimage: normalizeImageUrl(r.Pimage||r.pimage||r.Image||'')
-            }));
-            setProducts(normalized);
-            setFiltered(normalized);
-          }).catch(err=>{ console.error('sheet fetch err', err); setProducts([]); setFiltered([]); });
-          return ()=> mounted = false;
-        }, []);
+        // clear cart
+        setCart([]);
+        localStorage.removeItem('yf_cart');
+      } catch (e) {
+        alert('Error creating image or uploading. Check console.');
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-        // filter
-        useEffect(()=>{
-          const out = products.filter(d=>{
-            const matchesQ = !q || (d.pname && d.pname.toLowerCase().includes(q.toLowerCase())) || (d.pdesc && d.pdesc.toLowerCase().includes(q.toLowerCase()));
-            const matchesCat = (cat === 'All') || (d.category === cat);
-            return matchesQ && matchesCat;
-          });
-          setFiltered(out);
-        }, [products, q, cat]);
-
-        // connect header cart button
-        useEffect(()=>{
-          const btn = document.getElementById('openCartBtn');
-          if (btn) btn.onclick = () => setCartOpen(true);
-        }, []);
-
-        // add to cart with composite key
-        function addToCart(p) {
-          const key = `${p.pname||''}||${p.pimage||''}||${p.psize||''}`;
-          const idx = cart.findIndex(c => (c._key === key));
-          if (idx > -1) {
-            const cpy = cart.slice(); cpy[idx].qty += 1; setCart(cpy);
-          } else {
-            setCart([...cart, {...p, qty:1, _key:key}]);
-          }
-          // toast
-          const t = document.createElement('div');
-          t.textContent = '✅ Added to cart';
-          Object.assign(t.style, {position:'fixed',bottom:'18px',left:'50%',transform:'translateX(-50%)',background:'#25D366',color:'#fff',padding:'8px 14px',borderRadius:'8px',fontWeight:'700',boxShadow:'0 4px 12px rgba(0,0,0,0.2)',zIndex:9999});
-          document.body.appendChild(t);
-          setTimeout(()=>t.remove(),1300);
-        }
-
-        function changeQty(item, delta) {
-          setCart(cart.map(c => c === item ? {...c, qty: Math.max(1, c.qty + delta)} : c));
-        }
-        function removeFromCart(item) {
-          setCart(cart.filter(c => c !== item));
-        }
-
-        // --------------- NEW: Checkout / Image Snapshot Flow ---------------
-        // This state keeps the current image upload promise and its result link
-        const [imageUploadState, setImageUploadState] = useState({ status:'idle', link: null, error: null });
-
-        // Create a snapshot DOM for the current cart and upload it to Drive
-        async function generateAndUploadCartImage() {
-          // if no cart, skip
-          if (!cart || cart.length === 0) return { success: false, error: 'Cart empty' };
-          setImageUploadState({ status:'processing', link:null, error:null });
-
-          // Build a snapshot node in the offscreen holder
-          const holder = document.getElementById('cartSnapshotHolder');
-          holder.innerHTML = ''; // clear
-          const snap = document.createElement('div');
-          snap.style.width = '800px'; // fixed width for nicer high-res image
-          snap.style.padding = '18px';
-          snap.style.background = '#ffffff';
-          snap.style.fontFamily = 'Inter, Arial, sans-serif';
-          snap.style.color = '#222';
-          snap.style.border = '1px solid #e6e6e6';
-          snap.style.borderRadius = '8px';
-
-          // Header in snapshot
-          const header = document.createElement('div');
-          header.style.display = 'flex';
-          header.style.justifyContent = 'space-between';
-          header.style.alignItems = 'center';
-          header.style.marginBottom = '8px';
-          const left = document.createElement('div');
-          left.innerHTML = `<div style="font-weight:800;font-size:20px">YES FASHION HUB</div><div style="font-size:12px;color:#555;margin-top:4px">Order Snapshot</div>`;
-          const right = document.createElement('div');
-          right.innerHTML = `<img src="https://raw.githubusercontent.com/yesfashionhub/yesfashionhub.github.io/main/cropped-yes-lOGO.webp" style="height:56px;border-radius:6px;">`;
-          header.appendChild(left);
-          header.appendChild(right);
-          snap.appendChild(header);
-
-          // Customer placeholder (filled later when user inputs)
-          const custBox = document.createElement('div');
-          custBox.id = 'snapshot_customer_info';
-          custBox.style.margin = '8px 0 12px 0';
-          custBox.style.fontSize = '12px';
-          custBox.style.color = '#333';
-          snap.appendChild(custBox);
-
-          // Table header
-          const table = document.createElement('div');
-          table.style.width = '100%';
-          table.innerHTML = `
-            <div style="display:flex;font-weight:700;padding:8px 6px;border-top:1px solid #eee;border-bottom:1px solid #eee;background:#f8fff8">
-              <div style="width:40px">#</div>
-              <div style="flex:1">Product</div>
-              <div style="width:90px;text-align:center">Image</div>
-              <div style="width:80px;text-align:center">Size</div>
-              <div style="width:120px;text-align:right">Rate × Qty</div>
-              <div style="width:110px;text-align:right">Line Total</div>
-            </div>
-          `;
-          snap.appendChild(table);
-
-          // Rows
-          let grandTotal = 0;
-          for (let i=0;i<cart.length;i++) {
-            const it = cart[i];
-            const rate = Number(it.prate || 0);
-            const qty = Number(it.qty || 1);
-            const lineTotal = rate * qty;
-            grandTotal += lineTotal;
-
-            const row = document.createElement('div');
-            row.style.display = 'flex';
-            row.style.alignItems = 'center';
-            row.style.padding = '10px 6px';
-            row.style.borderBottom = '1px solid #f0f0f0';
-
-            const cellNo = document.createElement('div'); cellNo.style.width='40px'; cellNo.textContent = String(i+1);
-            const cellName = document.createElement('div'); cellName.style.flex='1'; cellName.style.fontWeight='700'; cellName.textContent = it.pname || '-';
-            const cellImg = document.createElement('div'); cellImg.style.width='90px'; cellImg.style.textAlign='center';
-            const imgEl = document.createElement('img'); imgEl.src = it.pimage || 'https://via.placeholder.com/80'; imgEl.style.width='60px'; imgEl.style.height='60px'; imgEl.style.objectFit='cover'; imgEl.style.borderRadius='6px'; cellImg.appendChild(imgEl);
-            const cellSize = document.createElement('div'); cellSize.style.width='80px'; cellSize.style.textAlign='center'; cellSize.textContent = it.psize || '-';
-            const cellRate = document.createElement('div'); cellRate.style.width='120px'; cellRate.style.textAlign='right'; cellRate.textContent = `Rs. ${rate} × ${qty}`;
-            const cellLine = document.createElement('div'); cellLine.style.width='110px'; cellLine.style.textAlign='right'; cellLine.textContent = `Rs. ${lineTotal}`;
-
-            row.appendChild(cellNo); row.appendChild(cellName); row.appendChild(cellImg); row.appendChild(cellSize); row.appendChild(cellRate); row.appendChild(cellLine);
-            table.appendChild(row);
-          }
-
-          // Grand total row
-          const grandRow = document.createElement('div');
-          grandRow.style.display='flex'; grandRow.style.justifyContent='flex-end'; grandRow.style.padding='12px 6px'; grandRow.style.fontWeight='800';
-          grandRow.innerHTML = `<div style="width:350px;text-align:right">Grand Total: &nbsp;</div><div style="width:110px;text-align:right">Rs. ${grandTotal}</div>`;
-          snap.appendChild(table);
-          snap.appendChild(grandRow);
-
-          // Append snapshot to holder and allow images to load
-          holder.appendChild(snap);
-
-          // Wait a tick for images to load
-          await new Promise(res => setTimeout(res, 500));
-
-          try {
-            // Use html2canvas with higher scale for crispness
-            const canvas = await html2canvas(snap, { scale: 2, useCORS: true, allowTaint: false, backgroundColor: '#ffffff' });
-            // convert to jpeg base64
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-            const base64 = dataUrl.split(',')[1];
-
-            // Upload to Drive via your Apps Script endpoint
-            const filename = `OrderImage_${Date.now()}.jpg`;
-            const resp = await fetch(DRIVE_UPLOAD_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-              body: new URLSearchParams({ file: base64, filename })
-            });
-            const json = await resp.json();
-            if (json && json.success && json.link) {
-              setImageUploadState({ status:'done', link: json.link, error: null });
-              return { success:true, link: json.link };
-            } else {
-              setImageUploadState({ status:'error', link: null, error: (json && json.error) || 'Upload failed' });
-              return { success:false, error: (json && json.error) || 'Upload failed' };
-            }
-          } catch (err) {
-            console.error('snapshot/upload error', err);
-            setImageUploadState({ status:'error', link:null, error: err.message || String(err) });
-            return { success:false, error: err.message || String(err) };
-          } finally {
-            // remove snapshot DOM (cleanup)
-            // keep holder cleared
-            // holder.innerHTML = '';
-          }
-        }
-
-        // Checkout start: start background image generation and open modal
-        async function startCheckout() {
-          if (!cart || cart.length === 0) { alert('Cart empty'); return; }
-
-          // kick off generation (don't await) — background job
-          const genPromise = generateAndUploadCartImage();
-
-          // show checkout modal for name & city
-          openCheckoutModal(genPromise);
-        }
-
-        // Modal behavior
-        function openCheckoutModal(genPromise) {
-          const container = document.getElementById('checkoutModalContainer');
-          container.innerHTML = ''; // reset
-
-          const modalWrap = document.createElement('div');
-          modalWrap.className = 'checkout-modal';
-
-          const card = document.createElement('div');
-          card.className = 'checkout-card';
-          card.innerHTML = `
-            <h3 style="margin:0 0 8px 0">Checkout</h3>
-            <div style="font-size:13px;color:#333;margin-bottom:8px">Enter your name and city to complete the order.</div>
-            <div style="display:flex;flex-direction:column;gap:8px">
-              <input id="co_name" placeholder="Customer Name" style="padding:10px;border-radius:6px;border:1px solid #ddd" />
-              <input id="co_city" placeholder="City" style="padding:10px;border-radius:6px;border:1px solid #ddd" />
-              <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
-                <button id="co_cancel" class="btn" style="background:#aaa">Cancel</button>
-                <button id="co_confirm" class="btn" style="background:#128C7E">Confirm & Share</button>
-              </div>
-              <div id="co_status" style="margin-top:10px;font-size:13px;color:#666"></div>
-            </div>
-          `;
-          modalWrap.appendChild(card);
-          container.appendChild(modalWrap);
-
-          // button behaviors
-          const btnCancel = document.getElementById('co_cancel');
-          const btnConfirm = document.getElementById('co_confirm');
-          const statusDiv = document.getElementById('co_status');
-
-          btnCancel.onclick = () => { container.innerHTML=''; };
-
-          btnConfirm.onclick = async () => {
-            const name = document.getElementById('co_name').value.trim();
-            const city = document.getElementById('co_city').value.trim();
-            if (!name) { alert('Please enter name'); return; }
-            if (!city) { alert('Please enter city'); return; }
-
-            // If the image generation already finished before user clicked, use it.
-            // Otherwise wait for the genPromise to finish while showing loader.
-            statusDiv.textContent = 'Preparing order image... please wait';
-            // show global loading overlay too
-            showGlobalLoading('Preparing order image — please wait');
-
-            // Wait for genPromise result (if still running)
-            let genResult;
-            try {
-              genResult = await genPromise;
-            } catch (err) {
-              genResult = { success:false, error: String(err) };
-            }
-
-            if (!genResult || !genResult.success) {
-              // failed — show error, allow retry
-              hideGlobalLoading();
-              statusDiv.textContent = 'Image creation failed. Please try again.';
-              console.error('Image generation/upload error', genResult && genResult.error);
-              return;
-            }
-
-            const link = genResult.link;
-            // Build WA message
-            const total = cart.reduce((s,i)=> s + (Number(i.prate||0) * Number(i.qty||1)), 0);
-            let msg = `Yes Fashion Hub - New Order\n\nName: ${name}\nCity: ${city}\n\n`;
-            cart.forEach((c,i)=> msg += `${i+1}. ${c.pname} | Qty: ${c.qty} | Rs. ${c.prate}\n`);
-            msg += `\nTotal: Rs. ${total}\n\nOrder Image: ${link}\n\nPlease confirm.`;
-
-            // open WhatsApp
-            const waUrl = `https://wa.me/${WHATSAPP_NUMBER_WITHOUT_PLUS}?text=${encodeURIComponent(msg)}`;
-            window.open(waUrl, '_blank');
-
-            // done — hide overlays, clear cart, close modal
-            hideGlobalLoading();
-            container.innerHTML = '';
-            setCart([]); setCartOpen(false);
-            alert('Order shared on WhatsApp. Thanks!');
-          };
-
-        }
-
-        // show/hide global loading overlay
-        function showGlobalLoading(text) {
-          let placeholder = document.getElementById('globalLoadingPlaceholder');
-          placeholder.innerHTML = `
-            <div id="loadingOverlay">
-              <div class="spinner"></div>
-              <div style="font-size:18px;font-weight:700;margin-bottom:8px">${text || 'Processing...'}</div>
-            </div>
-          `;
-        }
-        function hideGlobalLoading() {
-          let placeholder = document.getElementById('globalLoadingPlaceholder');
-          placeholder.innerHTML = '';
-        }
-
-        // --------------- End Checkout Flow ---------------
-
-        // UI rendering
-        return React.createElement('div', { style: { paddingBottom: 40 } },
-          React.createElement('div', { className: 'grid' },
-            filtered.map((p, idx) =>
-              React.createElement('div', { className: 'card', key: idx },
-                React.createElement('img', { src: p.pimage || 'https://via.placeholder.com/400x300?text=No+Image', alt: p.pname, loading:'lazy', decoding:'async' }),
-                React.createElement('h3', null, p.pname),
-                React.createElement('p', null, p.pdesc),
-                React.createElement('p', null, 'Size: ' + (p.psize || '-')),
-                React.createElement('p', null, '₹' + (p.prate || '-')),
-                React.createElement('div', null,
-                  React.createElement('button', { className: 'btn', onClick: () => addToCart(p) }, 'Add to Cart')
-                )
-              )
-            )
-          ),
-
-          cartOpen && React.createElement('div', { className: 'modal' },
-            React.createElement('div', { className: 'modal-content' },
-              React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
-                React.createElement('h3', null, 'Your Cart'),
-                React.createElement('div', null,
-                  React.createElement('button', { className: 'btn', onClick: startCheckout }, 'Checkout'),
-                  ' ',
-                  React.createElement('button', { className: 'btn', onClick: () => setCartOpen(false) }, 'Close')
-                )
-              ),
-              cart.length === 0 ? React.createElement('div', null, 'Cart is empty') :
-              React.createElement('div', null,
-                cart.map((c, i) =>
-                  React.createElement('div', { className: 'cart-row', key: i },
-                    React.createElement('img', { src: c.pimage || 'https://via.placeholder.com/80', alt: c.pname }),
-                    React.createElement('div', { style: { flex: 1 } },
-                      React.createElement('div', { style: { fontWeight: 700 } }, c.pname),
-                      React.createElement('div', null, '₹' + c.prate + ' x ' + c.qty),
-                      React.createElement('div', null, 'Size: ' + (c.psize || '-'))
-                    ),
-                    React.createElement('div', null,
-                      React.createElement('button', { className: 'qty-btn', onClick: () => changeQty(c, 1) }, '+'),
-                      React.createElement('button', { className: 'qty-btn', onClick: () => changeQty(c, -1) }, '-'),
-                      React.createElement('button', { className: 'qty-btn', onClick: () => removeFromCart(c) }, 'Remove')
-                    )
-                  )
-                ),
-                React.createElement('div', { style: { textAlign: 'right', fontWeight: 800, marginTop: 12 } }, `Total: Rs. ${cart.reduce((s,i)=> s + (Number(i.prate||0) * Number(i.qty||1)), 0)}`)
-              )
-            )
+    // --- Main Render
+    return React.createElement('div', null,
+      React.createElement('div', {className:'grid'},
+        filtered.map((p, i) =>
+          React.createElement('div', {className:'card', key:i},
+            React.createElement('img',{src:p.pimage,alt:p.pname}),
+            React.createElement('h3', null, p.pname),
+            React.createElement('p', null, p.pdesc),
+            React.createElement('button',{className:'btn',onClick:()=>addToCart(p)},'Add to cart')
           )
-        );
-      } // end App
+        )
+      ),
 
-      // render app
-      ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
-    })();
-    </script>
+      cartOpen && React.createElement('div',{className:'modal'},
+        React.createElement('div',{className:'modal-content'},
+          React.createElement('h3',null,'Your Cart'),
+          cart.map((c,i)=>
+            React.createElement('div',{key:i},`${c.pname} (x${c.qty}) - ₹${c.prate}`)
+          ),
+          React.createElement('div',null,`Total: ₹${cart.reduce((s,i)=>s+Number(i.prate)*i.qty,0)}`),
+          React.createElement('button',{className:'btn',onClick:()=>setShowPopup(true)},'Checkout')
+        )
+      ),
+
+      showPopup && React.createElement('div',{className:'popup'},
+        React.createElement('div',{className:'popup-content'},
+          React.createElement('h4',null,'Enter Details'),
+          React.createElement('input',{placeholder:'Your Name',value:userName,onChange:e=>setUserName(e.target.value)}),
+          React.createElement('input',{placeholder:'City',value:userCity,onChange:e=>setUserCity(e.target.value)}),
+          React.createElement('button',{className:'btn',onClick:handleCheckoutConfirm},'Confirm')
+        )
+      ),
+
+      loading && React.createElement('div',{className:'loading'},'🕐 Generating order image...')
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+})();
+</script>
+
+      
+
+
+
+
+
   </body>
 </html>
