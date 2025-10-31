@@ -1,338 +1,630 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>YES FASHION HUB - WhatsApp Store</title>
-  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
-  <meta http-equiv="Cache-Control" content="public, max-age=31536000" />
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>YesFashionHub - WhatsApp Store</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <meta http-equiv="Cache-Control" content="public, max-age=31536000">
 
-  <!-- ✅ Styles -->
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      font-family: 'Inter', system-ui, Arial;
-      margin: 0;
-      background: #e5ddd5;
-      overflow-x: hidden;
-    }
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        font-family: 'Inter', system-ui, Arial;
+        margin: 0;
+        background: #e5ddd5;
+        overflow-x: hidden;
+      }
 
-    /* HEADER */
-    header {
-      background: #25D366;
-      color: #fff;
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    }
+      header {
+        background: #25D366;
+        color: #fff;
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      }
 
-    .logo-wrap img {
-      height: 80px;
-      width: auto;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(255,255,255,0.9),
-                  0 2px 6px rgba(0,0,0,0.25);
-      background: rgba(255,255,255,0.15);
-      padding: 4px;
-    }
+      .logo-wrap img {
+        height: 90px;
+        width: auto;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(255,255,255,0.8),
+                    0 2px 6px rgba(0,0,0,0.25);
+        background: rgba(255,255,255,0.15);
+        padding: 4px;
+      }
 
-    .cart-wrap { position: relative; }
-    .cart-btn {
-      background: #128C7E;
-      border: none;
-      border-radius: 50%;
-      width: 44px;
-      height: 44px;
-      font-size: 22px;
-      color: #fff;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }
+      .cart-wrap { position: relative; }
+      .cart-btn {
+        background: #128C7E;
+        border: none;
+        border-radius: 50%;
+        width: 44px; height: 44px;
+        font-size: 22px; color: #fff;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        transition: transform 0.2s ease, background-color 0.3s;
+      }
+      .cart-btn:hover { transform: scale(1.1); background: #20ba5a; }
+      .cart-count {
+        position: absolute;
+        top: -6px; right: -6px;
+        background: #ff3b30; color: #fff;
+        border-radius: 50%; font-size: 12px;
+        padding: 3px 6px;
+      }
 
-    .cart-count {
-      position: absolute;
-      top: -6px;
-      right: -6px;
-      background: #ff3b30;
-      color: #fff;
-      border-radius: 50%;
-      font-size: 12px;
-      padding: 3px 6px;
-    }
+      .controls {
+        background: #fff;
+        display: flex; flex-direction: column;
+        gap: 8px; padding: 12px;
+      }
+      .controls input, .controls select {
+        padding: 10px; border: 1px solid #ccc;
+        border-radius: 8px; font-size: 15px;
+        width: 100%;
+      }
 
-    .controls {
-      background: #fff;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 12px;
-    }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 12px; padding: 12px;
+      }
 
-    .controls input,
-    .controls select {
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 15px;
-      width: 100%;
-    }
+      .card {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        overflow: hidden;
+        display: flex; flex-direction: column;
+        transition: transform 0.2s ease;
+      }
+      .card:hover { transform: scale(1.02); }
+      .card img {
+        width: 100%; height: 160px; object-fit: cover;
+      }
+      .card h3 { margin: 10px 8px 0; font-size: 16px; color: #222; }
+      .card p { margin: 4px 8px; font-size: 14px; color: #555; }
+      .btn {
+        background: #25D366; color: #fff;
+        border: none; border-radius: 6px;
+        padding: 8px 12px; cursor: pointer;
+        margin: 8px; font-weight: 600;
+      }
+      .btn:hover { background: #20ba5a; }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 12px;
-      padding: 12px;
-    }
+      .modal {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex; justify-content: center; align-items: center;
+        z-index: 2000;
+      }
+      .modal-content {
+        background: #fff;
+        border-radius: 10px;
+        padding: 16px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+      .cart-row {
+        display: flex; gap: 8px;
+        align-items: center;
+        margin: 8px 0;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 8px;
+      }
+      .cart-row img {
+        width: 60px; height: 60px; object-fit: cover; border-radius: 8px;
+      }
+      .qty-btn {
+        margin: 2px;
+        background: #eee;
+        border: none;
+        border-radius: 4px;
+        padding: 4px 8px;
+        cursor: pointer;
+      }
 
-    .card {
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      transition: transform 0.2s ease;
-    }
+      @media (max-width:600px){
+        header{padding:8px 12px;}
+        .logo-wrap img{height:44px;}
+        .cart-btn{width:40px;height:40px;font-size:20px;}
+        .grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));}
+      }
+    </style>
+  </head>
 
-    .card:hover { transform: scale(1.02); }
-    .card img {
-      width: 100%;
-      height: 160px;
-      object-fit: cover;
-    }
+  <body>
+    <header>
+      <div class="logo-wrap">
+        <img src="https://raw.githubusercontent.com/yesfashionhub/yesfashionhub.github.io/main/cropped-yes-lOGO.webp" alt="Logo" />
+      </div>
+      <div class="cart-wrap">
+        <button id="openCartBtn" class="cart-btn">🛍️</button>
+        <span id="cartCount" class="cart-count">0</span>
+      </div>
+    </header>
 
-    .btn {
-      background: #25D366;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      padding: 8px 12px;
-      cursor: pointer;
-      margin: 8px;
-      font-weight: 600;
-    }
-
-    .btn:hover { background: #20ba5a; }
-
-    /* Popup overlay */
-    .popup {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 2000;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .popup-content {
-      background: #fff;
-      border-radius: 10px;
-      padding: 20px;
-      width: 90%;
-      max-width: 400px;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }
-
-    .popup-content input {
-      width: 90%;
-      margin: 8px 0;
-      padding: 8px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-
-    /* Progress loader */
-    .loader-container { text-align: center; margin: 20px auto; }
-    .progress-ring {
-      width: 60px; height: 60px;
-      position: relative;
-      margin: 10px auto;
-    }
-    .progress-ring svg { transform: rotate(-90deg); }
-    .progress-ring circle {
-      fill: none;
-      stroke-width: 6;
-      stroke-linecap: round;
-      transition: stroke-dashoffset 0.3s linear;
-    }
-    .progress-text {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 14px;
-      font-weight: bold;
-      color: #128C7E;
-    }
-
-    @media (max-width:600px){
-      .logo-wrap img{height:60px;}
-    }
-  </style>
-</head>
-
-<body>
-  <!-- Header -->
-  <header>
-    <div class="logo-wrap">
-      <img src="https://raw.githubusercontent.com/yesfashionhub/yesfashionhub.github.io/main/cropped-yes-lOGO.webp" alt="Logo" />
+    <div class="controls">
+      <input type="text" id="searchBox" placeholder="Search products..." />
+      <select id="categoryFilter">
+        <option value="">All Categories</option>
+        <option value="Men">Men</option>
+        <option value="Women">Women</option>
+        <option value="Kids">Kids</option>
+      </select>
     </div>
-    <div class="cart-wrap">
-      <button class="cart-btn" id="checkoutBtn">🛒</button>
-      <span id="cartCount" class="cart-count">0</span>
-    </div>
-  </header>
 
-  <!-- Search controls -->
-  <div class="controls">
-    <input type="text" id="searchBox" placeholder="Search products..." />
-    <select id="categoryFilter">
-      <option value="">All Categories</option>
-      <option value="Men">Men</option>
-      <option value="Women">Women</option>
-      <option value="Kids">Kids</option>
-    </select>
-  </div>
+    <div id="productGrid" class="grid"></div>
+    <div id="root"></div>
 
-  <!-- Product grid -->
-  <div id="productGrid" class="grid"></div>
+    <!-- React -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
-  <!-- Popup -->
-  <div id="popup" class="popup">
-    <div class="popup-content">
-      <h3>Enter Details</h3>
-      <input type="text" id="userName" placeholder="Your Name" />
-      <input type="text" id="userCity" placeholder="Your City" />
-      <button class="btn" onclick="confirmOrder()">Confirm</button>
-    </div>
-  </div>
 
-  <!-- React, html2canvas -->
-  <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script>
+    (function(){
+      const { useState, useEffect } = React;
 
-  <script>
-  // Mock product list for demo
-  const products = [
-    { name: "Kurti Set", price: 799, image: "https://via.placeholder.com/300x200?text=Kurti" },
-    { name: "Jeans", price: 599, image: "https://via.placeholder.com/300x200?text=Jeans" },
-    { name: "T-Shirt", price: 499, image: "https://via.placeholder.com/300x200?text=Tshirt" }
-  ];
+      const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxENH68uAePu7ORZJawjjXVqvTJfXB8gpBVNfizrdOmyURo8vu4edhr7h9BDc1SdSxlEg/exec';
+      const WHATSAPP_NUMBER_WITHOUT_PLUS = '919978653852';
+      const DRIVE_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbzQFujhLNbFusQfPxsHgQfoXAwcQz-caWSs0JAZDR9VdqEWY_PdKNIDi6ELvFQK03LG/exec';
 
-  const grid = document.getElementById('productGrid');
-  const popup = document.getElementById('popup');
-  const cartCount = document.getElementById('cartCount');
-  let cart = [];
+      async function fetchSheet() {
+        const res = await fetch(SHEET_URL);
+        const json = await res.json();
+        return json.data || [];
+      }
 
-  // Render products
-  products.forEach((p, i) => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `
-      <img src="${p.image}" alt="${p.name}" />
-      <h3>${p.name}</h3>
-      <p>Rs. ${p.price}</p>
-      <button class="btn" onclick="addToCart(${i})">Add to Cart</button>
-    `;
-    grid.appendChild(card);
-  });
+      function normalizeImageUrl(cell) {
+        if (!cell) return '';
+        let val = String(cell);
+        if (val.includes(',')) val = val.split(',')[0].trim();
+        if (val.includes('\n')) val = val.split('\n')[0].trim();
+        if (val.includes('raw.githubusercontent.com')) return val;
+        if (val.includes('github.com') && val.includes('/blob/'))
+          return val.replace('https://github.com/', 'https://raw.githubusercontent.com/').replace('/blob/', '/');
+        if (val.includes('drive.google.com/file/d/')) {
+          const id = val.split('/d/')[1].split('/')[0];
+          return `https://drive.google.com/uc?export=view&id=${id}`;
+        }
+        return val;
+      }
 
-  function addToCart(i){
-    cart.push(products[i]);
-    cartCount.textContent = cart.length;
-    alert(products[i].name + " added to cart!");
-  }
+        function App(){
+          const [products, setProducts] = useState([]);
+          const [filtered, setFiltered] = useState([]);
+          const [q, setQ] = useState('');
+          const [cat, setCat] = useState('All');
+          const [cartOpen, setCartOpen] = useState(false);
+          const [cart, setCart] = useState(()=>JSON.parse(localStorage.getItem('yf_cart')||'[]'));
+        
+          useEffect(()=>{ fetchSheet().then(rows=>{
+            const normalized = rows.map(r=>({
+              category: r.Category||r.category||'',
+              pname: r.Pname||r.pname||r.Product||'',
+              pdesc: r.Pdesc||r.pdesc||'',
+              psize: r.Psize||r.psize||'',
+              prate: r.Prate||r.prate||r.Price||'0',
+              pimage: normalizeImageUrl(r.Pimage||r.pimage||r.Image||'')
+            }));
+            setProducts(normalized); setFiltered(normalized);
+          }); },[]);
+        
+          // ✅ Persist + Update badge count
+            useEffect(()=>{
+            localStorage.setItem('yf_cart', JSON.stringify(cart));
+            // update badge with total qty
+            const badge = document.getElementById('cartCount');
+            if (badge) {
+              const totalQty = cart.reduce((s, i) => s + (Number(i.qty || 0)), 0);
+              badge.textContent = totalQty || 0;
+              }
+            }, [cart]);
 
-  // Checkout
-  document.getElementById('checkoutBtn').onclick = () => {
-    if(cart.length === 0){ alert("Cart is empty!"); return; }
-    popup.style.display = 'flex';
-  };
+          useEffect(()=>{
+            const btn=document.getElementById('openCartBtn');
+            btn.onclick=()=>setCartOpen(true);
+          },[]);
+        
+          // ✅ Modified addToCart with success message
 
-  async function confirmOrder(){
-    const name = document.getElementById('userName').value.trim();
-    const city = document.getElementById('userCity').value.trim();
-    if(!name || !city){ alert("Please enter Name and City"); return; }
+                function addToCart(p) {
+                // create composite identifier
+                const key = `${p.pname || ''}||${p.pimage || ''}||${p.psize || ''}`;
+                // find index by composite key
+                const idx = cart.findIndex(c => ( (c._key || (c.pname+'||'+c.pimage+'||'+c.psize)) === key ));
+                if (idx > -1) {
+                  const copy = cart.slice();
+                  copy[idx].qty += 1;
+                  setCart(copy);
+                } else {
+                  const item = { ...p, qty: 1, _key: key };
+                  setCart([...cart, item]);
+                }
+              
+                // success feedback (quick toast)
+                const toast = document.createElement('div');
+                toast.textContent = '✅ Added to cart';
+                toast.style.position = 'fixed';
+                toast.style.bottom = '18px';
+                toast.style.left = '50%';
+                toast.style.transform = 'translateX(-50%)';
+                toast.style.background = '#25D366';
+                toast.style.color = '#fff';
+                toast.style.padding = '8px 14px';
+                toast.style.borderRadius = '8px';
+                toast.style.fontWeight = '700';
+                toast.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+                toast.style.zIndex = 9999;
+                document.body.appendChild(toast);
+                setTimeout(()=> toast.remove(), 1300);
+              }
+      
+          function changeQty(it,delta){setCart(cart.map(c=>c===it?{...c,qty:Math.max(1,c.qty+delta)}:c));}
+          function removeFromCart(it){setCart(cart.filter(c=>c!==it));}
 
-    // Show loader
-    popup.innerHTML = `
-      <div class="popup-content" style="text-align:center;">
-        <h3>Generating Order Image...</h3>
-        <div class="loader-container">
-          <div class="progress-ring">
-            <svg width="60" height="60">
-              <circle stroke="#eee" r="26" cx="30" cy="30"></circle>
-              <circle id="progressCircle" stroke="#25D366" r="26" cx="30" cy="30"
-                stroke-dasharray="${2 * Math.PI * 26}"
-                stroke-dashoffset="${2 * Math.PI * 26}">
-              </circle>
-            </svg>
-            <div id="progressText" class="progress-text">0%</div>
-          </div>
-          <p style="font-size:14px;color:#555;">Please wait, we’re creating your order image...</p>
-        </div>
-      </div>`;
+          // Confirm Final Order: generate PDF, upload to Drive, get link, open WhatsApp
+            async function confirmFinalOrder() {
+              if (cart.length === 0) {
+                alert('Cart empty');
+                return;
+              }
+            
+              // Ask for customer name & address before starting
+             // ✅ New Checkout with Image Upload + WhatsApp Share
+async function confirmFinalOrder() {
+  if (cart.length === 0) return alert("Cart is empty");
 
-    // Animate progress
-    let progress = 0;
-    const circle = document.getElementById("progressCircle");
-    const text = document.getElementById("progressText");
-    const radius = 26;
-    const circumference = 2 * Math.PI * radius;
-    const interval = setInterval(() => {
-      progress += 5;
-      if (progress > 100) progress = 100;
-      const offset = circumference - (progress / 100) * circumference;
-      circle.style.strokeDashoffset = offset;
-      text.textContent = progress + "%";
-      if (progress === 100) clearInterval(interval);
-    }, 200);
+  // 🟢 Create background snapshot process first
+  const holder = document.createElement("div");
+  holder.style.position = "fixed";
+  holder.style.left = "-9999px";
+  holder.style.top = "-9999px";
+  holder.style.background = "#fff";
+  holder.style.padding = "16px";
+  holder.style.width = "800px";
+  holder.innerHTML = `
+    <h2 style="text-align:center;color:#128C7E;font-family:Arial;margin:0 0 10px 0;">YES FASHION HUB</h2>
+    <div style="text-align:center;font-size:12px;margin-bottom:10px;color:#666;">Order Summary</div>
+    <table style="width:100%;border-collapse:collapse;font-family:Arial;font-size:12px;">
+      <thead style="background:#25D366;color:#fff;">
+        <tr>
+          <th style="padding:6px;border:1px solid #ddd;">No</th>
+          <th style="padding:6px;border:1px solid #ddd;">Product</th>
+          <th style="padding:6px;border:1px solid #ddd;">Image</th>
+          <th style="padding:6px;border:1px solid #ddd;">Size</th>
+          <th style="padding:6px;border:1px solid #ddd;">Rate × Qty</th>
+          <th style="padding:6px;border:1px solid #ddd;">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${cart.map((c,i)=>`
+          <tr>
+            <td style="border:1px solid #ddd;text-align:center;">${i+1}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${c.pname}</td>
+            <td style="border:1px solid #ddd;text-align:center;">
+              <img src="${c.pimage}" style="width:70px;height:70px;object-fit:cover;border-radius:6px;">
+            </td>
+            <td style="border:1px solid #ddd;text-align:center;">${c.psize}</td>
+            <td style="border:1px solid #ddd;text-align:center;">Rs. ${c.prate} × ${c.qty}</td>
+            <td style="border:1px solid #ddd;text-align:right;padding-right:6px;">Rs. ${Number(c.prate)*Number(c.qty)}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+    <div style="text-align:right;margin-top:10px;font-weight:700;font-size:14px;">Grand Total: Rs. ${cart.reduce((s,i)=>s+(Number(i.prate)*Number(i.qty)),0)}</div>
+  `;
+  document.body.appendChild(holder);
 
-    // Capture cart as image
-    const cartHtml = document.createElement('div');
-    cartHtml.style.background = '#fff';
-    cartHtml.style.padding = '10px';
-    cartHtml.innerHTML = `<h2>YES FASHION HUB - Order</h2>
-      <p><b>Name:</b> ${name}</p><p><b>City:</b> ${city}</p>
-      <table border="1" cellspacing="0" cellpadding="6" width="100%">
-        <tr><th>Product</th><th>Price</th></tr>
-        ${cart.map(c=>`<tr><td>${c.name}</td><td>Rs. ${c.price}</td></tr>`).join('')}
-      </table>`;
-    document.body.appendChild(cartHtml);
-
-    const canvas = await html2canvas(cartHtml);
-    const imgData = canvas.toDataURL('image/jpeg');
-    document.body.removeChild(cartHtml);
-
-    // Upload to Drive
-    const DRIVE_UPLOAD_URL = "YOUR_GOOGLE_SCRIPT_WEBAPP_URL"; // replace
-    const filename = `Order_${Date.now()}.jpg`;
-    const base64 = imgData.split(",")[1];
-    const res = await fetch(DRIVE_UPLOAD_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ file: base64, filename })
+  // Generate image (backend process)
+  const imagePromise = (async () => {
+    const canvas = await html2canvas(holder, {scale:2, useCORS:true});
+    const dataUrl = canvas.toDataURL("image/jpeg",0.9);
+    const base64 = dataUrl.split(",")[1];
+    const filename = `OrderImage_${Date.now()}.jpg`;
+    const res = await fetch(DRIVE_UPLOAD_URL,{
+      method:"POST",
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:new URLSearchParams({file:base64, filename})
     });
-
     const json = await res.json();
-    if(json && json.success){
-      const waUrl = `https://wa.me/919978653852?text=${encodeURIComponent(
-        `🛍️ YES FASHION HUB\nName: ${name}\nCity: ${city}\nTotal Items: ${cart.length}\n\nOrder Image: ${json.link}`
-      )}`;
-      window.open(waUrl, "_blank");
-    } else {
-      alert("Upload failed, please try again.");
-    }
+    holder.remove();
+    return json;
+  })();
 
-    cart = [];
-    cartCount.textContent = 0;
-    popup.style.display = 'none';
-  }
-  </script>
-</body>
+  // 🟡 Open name/city modal while image is uploading
+  const modal = document.createElement("div");
+  modal.style.position="fixed";
+  modal.style.inset="0";
+  modal.style.background="rgba(0,0,0,0.5)";
+  modal.style.display="flex";
+  modal.style.justifyContent="center";
+  modal.style.alignItems="center";
+  modal.style.zIndex="5000";
+  modal.innerHTML=`
+    <div style="background:#fff;padding:20px;border-radius:10px;max-width:400px;width:90%;text-align:center;">
+      <h3 style="margin-bottom:10px;color:#128C7E;">Checkout</h3>
+      <p style="font-size:13px;margin-bottom:12px;">Enter your details to share order on WhatsApp</p>
+      <input id="custName" placeholder="Name" style="width:100%;padding:10px;margin-bottom:8px;border:1px solid #ccc;border-radius:6px;">
+      <input id="custCity" placeholder="City" style="width:100%;padding:10px;margin-bottom:12px;border:1px solid #ccc;border-radius:6px;">
+      <button id="confirmBtn" style="background:#25D366;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:700;">Confirm & Share</button>
+      <button id="cancelBtn" style="margin-left:10px;padding:10px 20px;border:none;border-radius:8px;background:#aaa;color:#fff;">Cancel</button>
+      <div id="loadingMsg" style="margin-top:10px;font-size:12px;color:#555;display:none;">⏳ Preparing order image...</div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  document.getElementById("cancelBtn").onclick = ()=> modal.remove();
+
+  document.getElementById("confirmBtn").onclick = async ()=>{
+    const name = document.getElementById("custName").value.trim();
+    const city = document.getElementById("custCity").value.trim();
+    if(!name || !city){ alert("Please fill both fields"); return; }
+
+    const loadingText = document.getElementById("loadingMsg");
+    loadingText.style.display='block';
+
+    const json = await imagePromise;
+    if(!json || !json.success){ alert("Image upload failed"); modal.remove(); return; }
+
+    const link = json.link;
+    const msg = `*YES FASHION HUB - New Order*\n\n👤 Name: ${name}\n🏙️ City: ${city}\n\n🛒 Items:\n${cart.map((c,i)=>`${i+1}. ${c.pname} | Qty: ${c.qty} | Rs. ${c.prate}`).join('\n')}\n\n💰 Total: Rs. ${cart.reduce((s,i)=>s+(Number(i.prate)*Number(i.qty)),0)}\n\n📸 Order Image: ${link}\n\nPlease confirm your order.`;
+    
+    const waUrl = `https://wa.me/${WHATSAPP_NUMBER_WITHOUT_PLUS}?text=${encodeURIComponent(msg)}`;
+    window.open(waUrl,'_blank');
+    alert("✅ Order shared on WhatsApp!");
+    modal.remove();
+    setCart([]); setCartOpen(false);
+  };
+}
+
+            
+              // Show processing overlay
+              const overlay = document.createElement('div');
+              overlay.id = 'loadingOverlay';
+              overlay.style.position = 'fixed';
+              overlay.style.inset = '0';
+              overlay.style.background = 'rgba(0,0,0,0.6)';
+              overlay.style.display = 'flex';
+              overlay.style.flexDirection = 'column';
+              overlay.style.justifyContent = 'center';
+              overlay.style.alignItems = 'center';
+              overlay.style.zIndex = 6000;
+              overlay.innerHTML = `
+                <div style="color:#fff;font-size:20px;font-weight:700;margin-bottom:12px;">⏳ Generating Order PDF...</div>
+                <div style="width:64px;height:64px;border:6px solid rgba(255,255,255,0.2);border-top-color:#25D366;border-radius:50%;animation:spin 1s linear infinite;"></div>
+                <style>@keyframes spin{0%{transform:rotate(0);}100%{transform:rotate(360deg);}}</style>
+              `;
+              document.body.appendChild(overlay);
+            
+              try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+            
+                // --- HEADER ---
+                let y = 50;
+                doc.setFontSize(20);
+                doc.setFont('helvetica', 'bold');
+                doc.text('YES FASHION HUB', 40, y); // uppercase, no emoji
+                y += 22;
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Order Confirmation`, 40, y);
+                doc.text(`Customer: ${custName}`, 350, y);
+                y += 16;
+                doc.text(`Address: ${custAddr}`, 350, y);
+                y += 18;
+            
+                // Draw light header line
+                doc.setDrawColor(200);
+                doc.line(40, y, 555, y);
+                y += 14;
+            
+                // --- TABLE HEADER (with faint fill) ---
+                doc.setFillColor(245, 250, 245); // very light green-ish fill
+                doc.rect(40, y, 515, 22, 'F');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(11);
+                // Columns: No | Product | Image | Size | Rate x Qty | Line Total
+                doc.text('No.', 46, y + 15);
+                doc.text('Product', 76, y + 15);
+                doc.text('Image', 260, y + 15);
+                doc.text('Size', 330, y + 15);
+                doc.text('Rate × Qty', 390, y + 15);
+                doc.text('Line Total (Rs.)', 470, y + 15);
+                y += 28;
+            
+                // --- TABLE ROWS ---
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                let grandTotal = 0;
+            
+                for (let i = 0; i < cart.length; i++) {
+                  const item = cart[i];
+                  const rate = Number(item.prate || 0);
+                  const qty = Number(item.qty || 1);
+                  const lineTotal = rate * qty;
+                  grandTotal += lineTotal;
+            
+                  // Row height: 70 to fit 60x60 image nicely
+                  // background alternate row subtle (optional)
+                  if (i % 2 === 1) {
+                    doc.setFillColor(250, 250, 250);
+                    doc.rect(40, y - 6, 515, 70, 'F');
+                  }
+            
+                  // 1) No
+                  doc.setTextColor(0);
+                  doc.text(String(i + 1), 46, y + 12);
+            
+                  // 2) Product Name (wrap if long)
+                  doc.text(String(item.pname || '-'), 76, y + 12, { maxWidth: 170 });
+            
+                  // 3) Image column — draw 60x60 at x=250
+                  if (item.pimage) {
+                    try {
+                      const resp = await fetch(item.pimage, { mode: 'cors' });
+                      if (resp.ok) {
+                        const blob = await resp.blob();
+                        const dataUrl = await new Promise((res, rej) => {
+                          const reader = new FileReader();
+                          reader.onload = () => res(reader.result);
+                          reader.onerror = rej;
+                          reader.readAsDataURL(blob);
+                        });
+                        // place image centered in image column (x=250)
+                        doc.addImage(dataUrl, 'JPEG', 250, y - 8, 60, 60);
+                      }
+                    } catch (e) {
+                      // ignore image errors
+                    }
+                  }
+            
+                  // 4) Size
+                  doc.text(String(item.psize || '-'), 335, y + 12);
+            
+                  // 5) Rate x Qty (use Rs. label)
+                  doc.text(`Rs. ${rate} × ${qty}`, 390, y + 12);
+            
+                  // 6) Line total with Rs. label
+                  doc.text(`Rs. ${lineTotal}`, 480, y + 12);
+            
+                  // Move to next row
+                  y += 74;
+                  // page break if needed
+                  if (y > 720) {
+                    doc.addPage();
+                    y = 60;
+                  }
+                }
+            
+                // --- GRAND TOTAL BOX ---
+                doc.setDrawColor(180);
+                doc.line(320, y, 555, y);
+                y += 18;
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(13);
+                doc.text('Grand Total:', 360, y);
+                doc.text(`Rs. ${grandTotal}`, 480, y);
+            
+                // Footer text
+                y += 28;
+                doc.setFont('helvetica', 'italic');
+                doc.setFontSize(10);
+                doc.text('Thank you for shopping with YES FASHION HUB', 40, y);
+                y += 12;
+                doc.text('For queries contact us on WhatsApp.', 40, y);
+            
+                // Convert PDF -> base64
+                const pdfBlob = doc.output('blob');
+                const base64 = await new Promise((resolve, reject) => {
+                  const reader = new FileReader();
+                  reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                  reader.onerror = reject;
+                  reader.readAsDataURL(pdfBlob);
+                });
+            
+                // Upload to Drive (unchanged)
+                const filename = `Order_${Date.now()}.pdf`;
+                const res = await fetch(DRIVE_UPLOAD_URL, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                  body: new URLSearchParams({ file: base64, filename })
+                });
+            
+                const json = await res.json();
+                if (!json || !json.success) {
+                  alert('Upload failed. Please try again.');
+                  return;
+                }
+            
+                // WhatsApp message (unchanged)
+                const link = json.link;
+                let msgPlain = `Yes Fashion Hub - New Order\n\nCustomer: ${custName}\n\n`;
+                cart.forEach((c, i) => {
+                  msgPlain += `${i+1}. ${c.pname} | Qty: ${c.qty} | Rs. ${c.prate}\n`;
+                });
+                msgPlain += `\nTotal: Rs. ${grandTotal}\n\nOrder PDF: ${link}\n\nPlease confirm.`;
+            
+                window.open(`https://wa.me/${WHATSAPP_NUMBER_WITHOUT_PLUS}?text=${encodeURIComponent(msgPlain)}`, '_blank');
+            
+                alert('✅ Order uploaded successfully!');
+            
+                // Clear cart and close modal
+                setCart([]);
+                setCartOpen(false);
+            
+              } catch (err) {
+                console.error('confirmFinalOrder error', err);
+                alert('Error creating/uploading order. See console.');
+              } finally {
+                // remove overlay
+                const ov = document.getElementById('loadingOverlay');
+                if (ov) ov.remove();
+              }
+            }
+
+          
+
+          return React.createElement('div',null,
+          React.createElement('div',{className:'grid'},
+            filtered.map((p,idx)=>
+              React.createElement('div',{className:'card',key:idx},
+                React.createElement('img',{src:p.pimage||'https://via.placeholder.com/400x300?text=No+Image',alt:p.pname}),
+                React.createElement('h3',null,p.pname),
+                React.createElement('p',null,p.pdesc),
+                React.createElement('p',null,'Size: '+p.psize),
+                React.createElement('p',null,'₹'+p.prate),
+                React.createElement('button',{className:'btn',onClick:()=>addToCart(p)},'Add to Cart')
+              )
+            )
+          ),
+          cartOpen && React.createElement('div',{className:'modal'},
+            React.createElement('div',{className:'modal-content'},
+              React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
+                React.createElement('h3',null,'Your Cart'),
+                React.createElement('div',null,
+                  React.createElement('button',{className:'btn',onClick:confirmFinalOrder},'Confirm Final Order'),
+                  ' ',
+                  React.createElement('button',{className:'btn',onClick:()=>setCartOpen(false)},'Close')
+                )
+              ),
+              cart.length===0 ? React.createElement('div',null,'Cart is empty') :
+              React.createElement('div',null,
+                cart.map((c,i)=>
+                  React.createElement('div',{className:'cart-row',key:i},
+                    React.createElement('img',{src:c.pimage||'https://via.placeholder.com/80',alt:c.pname}),
+                    React.createElement('div',{style:{flex:1}},
+                      React.createElement('div',{style:{fontWeight:600}},c.pname),
+                      React.createElement('div',null,'₹'+c.prate+' x '+c.qty)
+                    ),
+                    React.createElement('div',null,
+                      React.createElement('button',{className:'qty-btn',onClick:()=>changeQty(c,1)},'+'),
+                      React.createElement('button',{className:'qty-btn',onClick:()=>changeQty(c,-1)},'-'),
+                      React.createElement('button',{className:'qty-btn',onClick:()=>removeFromCart(c)},'Remove')
+                    )
+                  )
+                ),
+                React.createElement('div',{style:{textAlign:'right',fontWeight:700,marginTop:10}},`Total: ₹${cart.reduce((s,i)=>s+(+i.prate*i.qty),0)}`)
+              )
+            )
+          )
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+    })();
+    </script>
+  </body>
 </html>
