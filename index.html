@@ -233,74 +233,86 @@
         function changeQty(it,delta){setCart(cart.map(c=>c===it?{...c,qty:Math.max(1,c.qty+delta)}:c));}
         function removeFromCart(it){setCart(cart.filter(c=>c!==it));}
 
-        async function confirmFinalOrder(){
-          if(cart.length===0) return alert('Cart empty');
+            // ✅ NEW CHECKOUT FUNCTION — creates actual JPG and uploads correctly
+async function confirmFinalOrder() {
+  if (cart.length === 0) {
+    alert('Cart empty');
+    return;
+  }
 
-          // 🧩 1. Create snapshot of cart
-          const holder=document.createElement('div');
-          holder.style.position='fixed';holder.style.left='-9999px';holder.style.background='#fff';holder.style.width='800px';holder.style.padding='16px';
-          holder.innerHTML=`
-            <h2 style="text-align:center;color:#128C7E;">YES FASHION HUB</h2>
-            <table style="width:100%;border-collapse:collapse;font-family:Arial;font-size:12px;">
-              <thead style="background:#25D366;color:#fff;">
-                <tr><th>#</th><th>Product</th><th>Image</th><th>Size</th><th>Rate×Qty</th><th>Total</th></tr>
-              </thead>
-              <tbody>
-              ${cart.map((c,i)=>`
-                <tr>
-                  <td style="border:1px solid #ddd;text-align:center;">${i+1}</td>
-                  <td style="border:1px solid #ddd;">${c.pname}</td>
-                  <td style="border:1px solid #ddd;text-align:center;">
-                    <img src="${c.pimage}" style="width:60px;height:60px;object-fit:cover;border-radius:4px;">
-                  </td>
-                  <td style="border:1px solid #ddd;text-align:center;">${c.psize}</td>
-                  <td style="border:1px solid #ddd;text-align:center;">Rs. ${c.prate} × ${c.qty}</td>
-                  <td style="border:1px solid #ddd;text-align:right;">Rs. ${Number(c.prate)*Number(c.qty)}</td>
-                </tr>`).join('')}
-              </tbody>
-            </table>
-            <div style="text-align:right;margin-top:8px;font-weight:700;">Grand Total: Rs. ${cart.reduce((s,i)=>s+(+i.prate*i.qty),0)}</div>`;
-          document.body.appendChild(holder);
+  // 🔹 Ask user details
+  const custName = prompt('Enter your name:');
+  if (!custName) return alert('Name required');
+  const custCity = prompt('Enter your city:');
+  if (!custCity) return alert('City required');
 
-          const imagePromise = (async()=>{
-            const canvas=await html2canvas(holder,{scale:2,useCORS:true});
-            const base64=canvas.toDataURL('image/jpeg',0.9).split(',')[1];
-            const res=await fetch(DRIVE_UPLOAD_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({file:base64,filename:`OrderImage_${Date.now()}.jpg`})});
-            holder.remove(); return res.json();
-          })();
+  // 🔹 Show loading overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'loadingOverlay';
+  overlay.style.position = 'fixed';
+  overlay.style.inset = '0';
+  overlay.style.background = 'rgba(0,0,0,0.6)';
+  overlay.style.display = 'flex';
+  overlay.style.flexDirection = 'column';
+  overlay.style.justifyContent = 'center';
+  overlay.style.alignItems = 'center';
+  overlay.style.zIndex = 6000;
+  overlay.innerHTML = `
+    <div style="color:#fff;font-size:20px;font-weight:700;margin-bottom:12px;">⏳ Creating Order Image...</div>
+    <div style="width:64px;height:64px;border:6px solid rgba(255,255,255,0.2);border-top-color:#25D366;border-radius:50%;animation:spin 1s linear infinite;"></div>
+    <style>@keyframes spin{0%{transform:rotate(0);}100%{transform:rotate(360deg);}}</style>
+  `;
+  document.body.appendChild(overlay);
 
-          // 🧩 2. Show name & city popup while uploading
-          const popup=document.createElement('div');
-          Object.assign(popup.style,{position:'fixed',inset:'0',background:'rgba(0,0,0,0.5)',display:'flex',justifyContent:'center',alignItems:'center',zIndex:'5000'});
-          popup.innerHTML=`
-            <div style="background:#fff;padding:18px;border-radius:10px;max-width:400px;width:90%;text-align:center;">
-              <h3 style="color:#128C7E;">Checkout</h3>
-              <p style="font-size:13px;color:#444;">Enter Name and City to continue</p>
-              <input id="cName" placeholder="Name" style="width:100%;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:6px;">
-              <input id="cCity" placeholder="City" style="width:100%;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:6px;">
-              <button id="confirmBtn" style="background:#25D366;color:#fff;border:none;padding:10px 20px;border-radius:8px;margin-top:10px;">Confirm & Share</button>
-              <button id="cancelBtn" style="margin-left:8px;background:#aaa;color:#fff;border:none;padding:10px 20px;border-radius:8px;">Cancel</button>
-              <div id="loadText" style="display:none;margin-top:10px;color:#666;">⏳ Preparing order image...</div>
-            </div>`;
-          document.body.appendChild(popup);
+  try {
+    // 🔹 Use html2canvas to capture cart modal as image
+    const cartEl = document.querySelector('.modal-content');
+    if (!cartEl) {
+      alert('Cart not visible for capture');
+      overlay.remove();
+      return;
+    }
 
-          document.getElementById('cancelBtn').onclick=()=>popup.remove();
+    // Load html2canvas if not already loaded
+    if (!window.html2canvas) {
+      await new Promise((res) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        s.onload = res;
+        document.body.appendChild(s);
+      });
+    }
 
-          document.getElementById('confirmBtn').onclick=async()=>{
-            const n=document.getElementById('cName').value.trim();
-            const c=document.getElementById('cCity').value.trim();
-            if(!n||!c) return alert('Please fill all fields');
-            document.getElementById('loadText').style.display='block';
-            const result=await imagePromise;
-            if(!result||!result.success){alert('Upload failed');popup.remove();return;}
-            const link=result.link;
-            const total=cart.reduce((s,i)=>s+(+i.prate*i.qty),0);
-            const msg=`*YES FASHION HUB - New Order*\n\n👤 Name: ${n}\n🏙️ City: ${c}\n\n🛒 Items:\n${cart.map((x,i)=>`${i+1}. ${x.pname} | Qty: ${x.qty} | Rs. ${x.prate}`).join('\n')}\n\n💰 Total: Rs. ${total}\n📸 Order Image: ${link}\n\nPlease confirm your order.`;
-            window.open('https://wa.me/'+WHATSAPP_NUMBER_WITHOUT_PLUS+'?text='+encodeURIComponent(msg),'_blank');
-            alert('✅ Order shared on WhatsApp!');
-            popup.remove(); setCart([]); setCartOpen(false);
-          };
-        }
+    const canvas = await html2canvas(cartEl, { backgroundColor: '#fff', scale: 2 });
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    const base64 = dataUrl.split(',')[1];
+
+    // 🔹 Upload image to Drive
+    const filename = `Order_${custName}_${Date.now()}.jpg`;
+    const res = await fetch(DRIVE_UPLOAD_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ file: base64, filename })
+    });
+
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error || 'Upload failed');
+
+    // 🔹 WhatsApp message with image link
+    const msg = `🛍️ *YES FASHION HUB NEW ORDER*\n\n👤 Name: ${custName}\n🏙️ City: ${custCity}\n\nView order image:\n${json.link}`;
+    window.open(`https://wa.me/${WHATSAPP_NUMBER_WITHOUT_PLUS}?text=${encodeURIComponent(msg)}`, '_blank');
+
+    alert('✅ Order image uploaded successfully!');
+    setCart([]);
+    setCartOpen(false);
+  } catch (err) {
+    console.error('Error creating image:', err);
+    alert('❌ Error creating/uploading image.');
+  } finally {
+    const ov = document.getElementById('loadingOverlay');
+    if (ov) ov.remove();
+  }
+  }
 
         return React.createElement('div',null,
           React.createElement('div',{className:'grid'},
