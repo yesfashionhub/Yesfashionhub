@@ -246,6 +246,16 @@ async function generatePDF(){
   cart=[];updateCartBadge();closeModal();
 }
 
+  products = rows.map(r => ({
+  Categories: r.Categories || r[1] || '',
+  Pname: r.Pname || r[2] || '',
+  Pdesc: r.Pdesc || r[4] || '',
+  Psize: r.Psize || r[5] || '',
+  Prate: r.Prate || r[6] || '0',
+  Pgst:  r.Pgst  || r[7] || '',
+  Pimage: (r.Pimage || r[9] || '').split(/[,]+/)[0]
+}));
+
 function $(id){return document.getElementById(id);}
 </script>
 </body>
