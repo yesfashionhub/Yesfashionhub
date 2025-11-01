@@ -91,8 +91,8 @@ function renderProducts(){
       <img src="${imgs[0]||''}" alt="${p.Pname}">
       <h3>${p.Pname}</h3>
       <p>${p.Pdesc||''}</p>
-      <button class='btn' onclick='viewCollection(${JSON.stringify(p).replace(/"/g,"&quot;")})'>View Full Collection</button>`;
-    grid.appendChild(div);
+ <button class='btn' onclick='viewCollection("${p.Psku}")'>👗 View Collection</button>
+   grid.appendChild(div);
   });
 }
 $('searchBox').oninput=renderProducts;
@@ -135,6 +135,10 @@ function toast(msg){
   document.body.appendChild(t); setTimeout(()=>t.remove(),1200);
 }
 function $(id){return document.getElementById(id);}
+  function viewCollection(pid){
+  window.location.href = `collection.html?pid=${encodeURIComponent(pid)}`;
+}
+
 </script>
 </body>
 </html>
