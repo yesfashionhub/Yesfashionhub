@@ -64,7 +64,7 @@ async function fetchSheet() {
 
     const script = document.createElement('script');
     script.src = `${SHEET_URL}?callback=${callbackName}`;
-    script.onerror = () => reject('Network error');
+    script.onerror = () => reject(new Error('Network error: Failed to load Apps Script URL'));
     document.body.appendChild(script);
   });
 }
