@@ -15,7 +15,6 @@
     .card img{width:100%;height:170px;object-fit:cover;}
     .card h3{margin:8px;font-size:15px;}
     .card p{margin:4px 8px;font-size:13px;color:#555;}
-    select.sizeSel{margin:6px 8px;padding:6px;width:calc(100% - 16px);border:1px solid #ccc;border-radius:6px;}
     .btn{background:#25D366;color:#fff;border:none;border-radius:6px;padding:8px 12px;margin:8px;font-weight:600;cursor:pointer;}
     .btn:hover{background:#1eb85c;}
     .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;}
@@ -43,83 +42,86 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbygSw84ilE06oLMHZRsVD4jxEMvFECccQKl6A80UbkjtNpO_sAwbC_aS1hSjhIghPre/exec";   // Replace with your new deployed Google Apps Script URL
-const DRIVE_UPLOAD_URL = "https://script.google.com/macros/s/AKfycbygSw84ilE06oLMHZRsVD4jxEMvFECccQKl6A80UbkjtNpO_sAwbC_aS1hSjhIghPre/exec";
-const WHATSAPP_NO = "919978653852";
+const SHEET_URL = "YOUR_DEPLOYED_URL_HERE";  // 🔹 replace with your deployed Apps Script exec URL
+const DRIVE_UPLOAD_URL = SHEET_URL;
+const WHATSAPP_NO = "919978653852"; // your WhatsApp number (no +)
 
 let products = [];
 let cart = JSON.parse(localStorage.getItem('yf_cart')||'[]');
 updateCartBadge();
 
-// ===== Fetch Sheet Data (JSONP) =====
+// ===== FETCH SHEET VIA JSONP (MOBILE SAFE) =====
 async function fetchSheet(){
   return new Promise((resolve,reject)=>{
     const cb='cb_'+Date.now();
-    window[cb]=(res)=>{
-      products = res.data || [];
-      const cats=[...new Set(products.map(p=>p.Categories))].filter(Boolean);
-      document.getElementById('categoryFilter').innerHTML =
-        '<option value="All">All</option>'+cats.map(c=>`<option>${c}</option>`).join('');
-      renderProducts();
-      delete window[cb];
-      resolve();
+    window[cb]=(d)=>{
+      try {
+        products = (d && d.data) ? d.data : [];
+        if(!products.length){ console.error("⚠ No products found"); return; }
+        const cats=[...new Set(products.map(p=>p.Categories))].filter(Boolean);
+        document.getElementById('categoryFilter').innerHTML=
+          '<option value="All">All</option>'+cats.map(c=>`<option>${c}</option>`).join('');
+        renderProducts();
+        delete window[cb];
+        resolve();
+      }catch(err){console.error("Fetch parse error",err);reject(err);}
     };
     const s=document.createElement('script');
-    s.src=`${SHEET_URL}?callback=${cb}`;
-    s.onerror=()=>reject(new Error("Network error"));
+    s.src=`${SHEET_URL}?callback=${cb}&_=${Date.now()}`;
+    s.async=true;
+    s.onerror=()=>reject(new Error("❌ Network error loading sheet"));
     document.body.appendChild(s);
   });
 }
 fetchSheet();
 
-// ===== Render Products =====
+// ===== RENDER PRODUCTS =====
 function renderProducts(){
   const q=document.getElementById('searchBox').value.toLowerCase();
   const cat=document.getElementById('categoryFilter').value;
   const grid=document.getElementById('productGrid');
   grid.innerHTML='';
-
   const filtered=products.filter(p=>{
     const mq=!q||(p.Pname||'').toLowerCase().includes(q);
     const mc=(cat==='All')||p.Categories===cat;
     return mq&&mc;
   });
 
+  if(filtered.length===0){
+    grid.innerHTML="<p style='text-align:center;width:100%;color:#999;'>No products found.</p>";
+    return;
+  }
+
   filtered.forEach(p=>{
     const div=document.createElement('div');
     div.className='card';
-
-    const imgs=(p.Pimage||'').split(/[,]+/).map(x=>x.trim()).filter(Boolean);
-    const firstImg=imgs[0]||'https://via.placeholder.com/300x300?text=No+Image';
-    const sizes=(p.Psize||'').split(/[,]+/).map(s=>s.trim()).filter(Boolean);
-
+    const imgs=(p.Pimage||'').split(/[,]+/).filter(Boolean);
+    const mainImg=imgs[0]||'';
+    const sizes=(p.Psize||'').split(/[,]+/).filter(Boolean);
     div.innerHTML=`
-      <img src="${firstImg}" alt="${p.Pname}">
+      <img src="${mainImg}" alt="${p.Pname}" loading="lazy">
       <h3>${p.Pname}</h3>
       <p>${p.Pdesc||''}</p>
-      <p>₹${p.Prate} ${(p.Pgst||'').toLowerCase().includes('inc')?'(Incl. GST)':'(Excl. GST)'}</p>
-      ${sizes.length?`<select class='sizeSel'>${sizes.map(s=>`<option>${s}</option>`).join('')}</select>`:''}
-      <button class='btn'>Add to Cart</button>
+      <p><b>₹${p.Prate}</b> ${(p.Pgst||'').toLowerCase().includes('inc')?'(Incl. GST)':'(Excl. GST)'}</p>
+      ${sizes.length?`<select id="size_${p.Psku}" style="width:90%;padding:6px;margin:5px;">${sizes.map(s=>`<option>${s}</option>`).join('')}</select>`:''}
+      <button class='btn' onclick='addToCart(${JSON.stringify(p).replace(/"/g,"&quot;")})'>Add</button>
     `;
-    const btn=div.querySelector('.btn');
-    btn.onclick=()=>{
-      const selSize = (div.querySelector('.sizeSel')||{}).value || p.Psize || '-';
-      addToCart({...p,Psize:selSize});
-    };
     grid.appendChild(div);
   });
 }
 document.getElementById('searchBox').oninput=renderProducts;
 document.getElementById('categoryFilter').onchange=renderProducts;
 
-// ===== Cart Functions =====
+// ===== CART =====
 function addToCart(p){
-  const key=p.Pname+'|'+p.Psize;
+  const sizeSel=document.getElementById('size_'+p.Psku);
+  const size=sizeSel?sizeSel.value:'';
+  const key=p.Pname+'|'+size;
   const ex=cart.find(c=>c.key===key);
-  if(ex)ex.qty+=1;else cart.push({...p,qty:1,key});
+  if(ex)ex.qty+=1;else cart.push({...p,qty:1,key,Psize:size});
   localStorage.setItem('yf_cart',JSON.stringify(cart));
   updateCartBadge();
-  toast('Added to cart');
+  toast('✅ Added to cart');
 }
 function updateCartBadge(){
   document.getElementById('cartCount').innerText=cart.reduce((a,b)=>a+b.qty,0);
@@ -132,7 +134,7 @@ function toast(msg){
   setTimeout(()=>t.remove(),1200);
 }
 
-// ===== Cart Modal =====
+// ===== CART MODAL =====
 document.getElementById('cartBtn').onclick=()=>showCart();
 function showCart(){
   const modal=document.createElement('div');
@@ -140,12 +142,12 @@ function showCart(){
   modal.innerHTML=`
   <div class='modal-box'>
     <h3>Your Cart</h3>
-    ${cart.length===0?'<p>Cart empty</p>':
+    ${cart.length===0?'<p>Cart is empty</p>':
       cart.map((c,i)=>`
         <div style='display:flex;align-items:center;margin:6px 0;border-bottom:1px solid #eee;padding:6px 0;'>
           <img src='${(c.Pimage||'').split(',')[0]}' style='width:50px;height:50px;object-fit:cover;border-radius:6px;margin-right:8px;'>
           <div style='flex:1;'>
-            <b>${c.Pname}</b><br>Size: ${c.Psize||'-'}<br>₹${c.Prate} × ${c.qty}
+            <b>${c.Pname}</b><br>${c.Psize?`Size: ${c.Psize}<br>`:''}₹${c.Prate} × ${c.qty}
           </div>
           <button class='btn' style='padding:4px 8px;' onclick='removeFromCart(${i})'>❌</button>
         </div>`).join('')}
@@ -159,7 +161,7 @@ function showCart(){
 function closeModal(){document.getElementById('modalRoot').innerHTML='';}
 function removeFromCart(i){cart.splice(i,1);localStorage.setItem('yf_cart',JSON.stringify(cart));updateCartBadge();showCart();}
 
-// ===== Checkout & PDF Upload =====
+// ===== CHECKOUT & PDF =====
 async function checkout(){
   if(cart.length===0)return;
   const html=`
@@ -178,7 +180,7 @@ async function checkout(){
 async function generatePDF(){
   const name=$('uname').value,addr=$('uaddr').value,city=$('ucity').value,mob=$('umob').value;
   if(!name||!city||!mob)return alert('Please fill all fields!');
-  $('modalRoot').innerHTML=`<div class='modal'><div class='modal-box'><div class='loader'></div><p>Processing...</p></div></div>`;
+  $('modalRoot').innerHTML=`<div class='modal'><div class='modal-box'><div class='loader'></div><p>Processing your order...</p></div></div>`;
   const { jsPDF } = window.jspdf;
   const doc=new jsPDF({unit:'pt',format:'a4'});
   doc.setFontSize(18);doc.text("YES FASHION HUB",220,40);
@@ -190,7 +192,7 @@ async function generatePDF(){
   let y=135;let total=0;
   cart.forEach((c,i)=>{
     const lineTotal=(+c.Prate)*c.qty; total+=lineTotal;
-    doc.text(`${i+1}. ${c.Pname} (${c.Psize||'-'})`,40,y);
+    doc.text(`${i+1}. ${c.Pname} (${c.Psize||''})`,40,y);
     doc.text(`Qty: ${c.qty}`,400,y);
     doc.text(`₹${c.Prate}`,460,y);
     doc.text(`= ₹${lineTotal}`,520,y);
