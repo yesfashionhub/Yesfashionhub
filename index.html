@@ -1,366 +1,171 @@
 <!doctype html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>YesFashionHub - WhatsApp Store</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-    <meta http-equiv="Cache-Control" content="public, max-age=31536000">
+<head>
+<meta charset="utf-8">
+<title>YES FASHION HUB - Store</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<style>
+body{margin:0;font-family:'Inter',Arial,sans-serif;background:#f2f5f3;color:#222}
+header{background:#25D366;color:#fff;padding:12px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 3px 8px rgba(0,0,0,0.15)}
+header img{height:60px;border-radius:8px;background:#fff;padding:4px}
+.cart-btn{background:#128C7E;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
+.cart-count{background:#ff3b30;color:#fff;border-radius:50%;padding:4px 7px;font-size:12px;position:relative;top:-10px;right:10px}
+.controls{display:flex;gap:8px;padding:10px;background:#fff;margin:10px}
+.controls input,.controls select{padding:10px;border:1px solid #ccc;border-radius:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;padding:10px}
+.card{background:#fff;border-radius:8px;padding:8px;box-shadow:0 2px 6px rgba(0,0,0,0.08)}
+.card img{width:100%;height:160px;object-fit:cover;border-radius:8px}
+.btn{background:#25D366;color:#fff;border:none;padding:8px 10px;border-radius:6px;cursor:pointer}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:9999}
+.modal-box{background:#fff;border-radius:10px;max-width:420px;width:95%;padding:16px}
+.loader{width:50px;height:50px;border:6px solid #ccc;border-top:6px solid #25D366;border-radius:50%;animation:spin 1s linear infinite;margin:auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
 
-    <!-- html2canvas for cart snapshot -->
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<body>
+<header>
+  <div style="display:flex;align-items:center;gap:10px">
+    <img src="https://raw.githubusercontent.com/yesfashionhub/yesfashionhub.github.io/main/cropped-yes-lOGO.webp">
+    <h2>YES FASHION HUB</h2>
+  </div>
+  <div>
+    <button class="cart-btn" onclick="openCart()">🛍️ Cart</button>
+    <span id="cartCount" class="cart-count">0</span>
+  </div>
+</header>
 
-    <style>
-      * { box-sizing: border-box; }
-      body {
-        font-family: 'Inter', system-ui, Arial;
-        margin: 0;
-        background: #e5ddd5;
-        overflow-x: hidden;
-      }
+<div class="controls">
+  <input id="searchBox" placeholder="Search products...">
+  <select id="categoryFilter"><option value="All">All</option></select>
+</div>
 
-      header {
-        background: #25D366;
-        color: #fff;
-        padding: 10px 16px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      }
+<div id="productGrid" class="grid"></div>
 
-      .logo-wrap img {
-        height: 90px;
-        width: auto;
-        border-radius: 10px;
-        box-shadow: 0 0 10px rgba(255,255,255,0.8),
-                    0 2px 6px rgba(0,0,0,0.25);
-        background: rgba(255,255,255,0.15);
-        padding: 4px;
-      }
+<!-- Modal root -->
+<div id="modalRoot"></div>
 
-      .cart-wrap { position: relative; }
-      .cart-btn {
-        background: #128C7E;
-        border: none;
-        border-radius: 50%;
-        width: 44px; height: 44px;
-        font-size: 22px; color: #fff;
-        cursor: pointer;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      }
-      .cart-count {
-        position: absolute;
-        top: -6px; right: -6px;
-        background: #ff3b30; color: #fff;
-        border-radius: 50%; font-size: 12px;
-        padding: 3px 6px;
-      }
+<script>
+/******** CONFIG *********/
+const SHEET_URL = "https://script.google.com/macros/s/AKfycby7Zvv-12wSqDI68vxeo1p76zDk3aCecWhmbjWUOuasPGzysTYZrPizUnicfk7Bek4f/exec";
+const DRIVE_UPLOAD_URL = "https://script.google.com/macros/s/AKfycby7Zvv-12wSqDI68vxeo1p76zDk3aCecWhmbjWUOuasPGzysTYZrPizUnicfk7Bek4f/exec";
+const WHATSAPP_NUMBER_WITHOUT_PLUS = "919978653852";
+/*************************/
+let products=[],cart=[];
+function $(id){return document.getElementById(id)}
+function renderProducts(){
+  const q=$('searchBox').value.toLowerCase();
+  const cat=$('categoryFilter').value;
+  const grid=$('productGrid'); grid.innerHTML='';
+  const f=products.filter(p=>(cat==='All'||p.Categories===cat)&&(!q||p.Pname.toLowerCase().includes(q)||p.Pdesc.toLowerCase().includes(q)));
+  f.forEach(p=>{
+    const img=(p.Pimage||'').split(/[,]+/)[0];
+    const card=document.createElement('div');
+    card.className='card';
+    card.innerHTML=`
+      <img src="${img}" alt="">
+      <h3>${p.Pname}</h3>
+      <p>${p.Pdesc||''}</p>
+      <p><b>₹${p.Prate}</b> (${p.Pgst})</p>
+      <button class="btn" onclick='addToCart(${JSON.stringify(p)})'>Add to Cart</button>`;
+    grid.appendChild(card);
+  });
+}
+function fetchSheet(){
+  fetch(SHEET_URL).then(r=>r.json()).then(j=>{
+    products=j.data;
+    const cats=[...new Set(products.map(p=>p.Categories))].filter(Boolean);
+    $('categoryFilter').innerHTML='<option value="All">All</option>'+cats.map(c=>`<option>${c}</option>`).join('');
+    renderProducts();
+  });
+}
+function addToCart(p){
+  const e=cart.find(x=>x.Pname===p.Pname);
+  if(e)e.qty++; else{p.qty=1;cart.push(p);}
+  $('cartCount').innerText=cart.reduce((a,b)=>a+b.qty,0);
+  alert("✅ Added to cart");
+}
+function openCart(){
+  if(!cart.length){alert('Cart empty');return;}
+  const div=document.createElement('div');div.className='modal';
+  let html=`<div class='modal-box'><h3>Your Cart</h3>`;
+  cart.forEach((c,i)=>{
+    const img=(c.Pimage||'').split(/[,]+/)[0];
+    html+=`<div style='display:flex;gap:10px;margin-bottom:6px;'>
+      <img src='${img}' style='width:60px;height:60px;object-fit:cover;border-radius:6px'>
+      <div style='flex:1'><b>${c.Pname}</b><br>Qty: ${c.qty} x ₹${c.Prate}</div>
+    </div>`;
+  });
+  html+=`<hr><button class='btn' onclick='checkout()'>Checkout</button>
+         <button class='btn' style='background:#ccc;color:#000' onclick='closeModal()'>Close</button></div>`;
+  div.innerHTML=html; $('modalRoot').appendChild(div);
+}
+function closeModal(){$('modalRoot').innerHTML='';}
 
-      .controls {
-        background: #fff;
-        display: flex; flex-direction: column;
-        gap: 8px; padding: 12px;
-      }
-      .controls input, .controls select {
-        padding: 10px; border: 1px solid #ccc;
-        border-radius: 8px; font-size: 15px;
-        width: 100%;
-      }
+/******** CHECKOUT ********/
+async function checkout(){
+  closeModal();
+  const formDiv=document.createElement('div');
+  formDiv.className='modal';
+  formDiv.innerHTML=`<div class='modal-box'>
+    <h3>Customer Details</h3>
+    <input id='uname' placeholder='Full Name' style='width:100%;padding:8px;margin:6px 0'>
+    <input id='uaddr' placeholder='Address' style='width:100%;padding:8px;margin:6px 0'>
+    <input id='ucity' placeholder='City' style='width:100%;padding:8px;margin:6px 0'>
+    <input id='umob' placeholder='Mobile' style='width:100%;padding:8px;margin:6px 0'>
+    <button class='btn' onclick='generatePDF()'>Confirm Order</button>
+  </div>`;
+  $('modalRoot').appendChild(formDiv);
+}
 
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 12px; padding: 12px;
-      }
+async function generatePDF(){
+  const name=$('uname').value,addr=$('uaddr').value,city=$('ucity').value,mob=$('umob').value;
+  if(!name||!city||!mob)return alert('Please fill all fields!');
+  $('modalRoot').innerHTML=`<div class='modal'><div class='modal-box'><div class='loader'></div><p>Processing your order...</p></div></div>`;
+  const { jsPDF } = window.jspdf;
+  const doc=new jsPDF({unit:'pt',format:'a4'});
+  doc.setFontSize(18);doc.text("YES FASHION HUB",220,40);
+  doc.setFontSize(12);
+  doc.text(`Name: ${name}`,40,70);
+  doc.text(`Address: ${addr}`,40,85);
+  doc.text(`City: ${city}`,40,100);
+  doc.text(`Mobile: ${mob}`,40,115);
+  doc.line(40,125,550,125);
+  let y=145;let total=0;
+  doc.setFontSize(13);
+  cart.forEach((c,i)=>{
+    const img=(c.Pimage||'').split(/[,]+/)[0];
+    const lineTotal=(+c.Prate)*c.qty; total+=lineTotal;
+    doc.text(`${i+1}. ${c.Pname}`,40,y);
+    doc.text(`Qty: ${c.qty}`,400,y);
+    doc.text(`₹${c.Prate}`,460,y);
+    doc.text(`= ₹${lineTotal}`,520,y);
+    y+=18;
+    if(img){try{
+      const a=document.createElement('img');a.src=img;
+      await new Promise(r=>a.onload=r);
+      doc.addImage(a,'JPEG',60,y,80,80);
+      y+=90;
+    }catch{}}
+  });
+  doc.line(40,y,550,y);
+  doc.text(`Grand Total: ₹${total}`,400,y+20);
+  const pdfBase64=btoa(doc.output());
+  const resp=await fetch(DRIVE_UPLOAD_URL,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({file:pdfBase64,filename:`Order_${Date.now()}.pdf`})
+  });
+  const js=await resp.json();
+  $('modalRoot').innerHTML='';
+  if(js.success){
+    const msg=`Yes Fashion Hub - New Order\nName: ${name}\nCity: ${city}\nMobile: ${mob}\nTotal: ₹${total}\nOrder PDF: ${js.link}`;
+    window.open(`https://wa.me/${WHATSAPP_NUMBER_WITHOUT_PLUS}?text=${encodeURIComponent(msg)}`);
+    cart=[];$('cartCount').innerText='0';
+  }else alert('Upload failed: '+js.error);
+}
 
-      .card {
-        background: #fff;
-        border-radius: 10px;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-        overflow: hidden;
-        display: flex; flex-direction: column;
-        transition: transform 0.2s ease;
-      }
-      .card:hover { transform: scale(1.02); }
-      .card img {
-        width: 100%; height: 160px; object-fit: cover;
-      }
-      .card h3 { margin: 10px 8px 0; font-size: 16px; color: #222; }
-      .card p { margin: 4px 8px; font-size: 14px; color: #555; }
-      .btn {
-        background: #25D366; color: #fff;
-        border: none; border-radius: 6px;
-        padding: 8px 12px; cursor: pointer;
-        margin: 8px; font-weight: 600;
-      }
-      .btn:hover { background: #20ba5a; }
-
-      .modal {
-        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.5);
-        display: flex; justify-content: center; align-items: center;
-        z-index: 2000;
-      }
-      .modal-content {
-        background: #fff;
-        border-radius: 10px;
-        padding: 16px;
-        width: 90%;
-        max-width: 500px;
-        max-height: 80vh;
-        overflow-y: auto;
-      }
-      .cart-row {
-        display: flex; gap: 8px;
-        align-items: center;
-        margin: 8px 0;
-        border-bottom: 1px solid #ddd;
-        padding-bottom: 8px;
-      }
-      .cart-row img {
-        width: 60px; height: 60px; object-fit: cover; border-radius: 8px;
-      }
-      .qty-btn {
-        margin: 2px;
-        background: #eee;
-        border: none;
-        border-radius: 4px;
-        padding: 4px 8px;
-        cursor: pointer;
-      }
-    </style>
-  </head>
-
-  <body>
-    <header>
-      <div class="logo-wrap">
-        <img src="https://raw.githubusercontent.com/yesfashionhub/yesfashionhub.github.io/main/cropped-yes-lOGO.webp" alt="Logo" />
-      </div>
-      <div class="cart-wrap">
-        <button id="openCartBtn" class="cart-btn">🛍️</button>
-        <span id="cartCount" class="cart-count">0</span>
-      </div>
-    </header>
-
-    <div class="controls">
-      <input type="text" id="searchBox" placeholder="Search products..." />
-      <select id="categoryFilter">
-        <option value="">All Categories</option>
-        <option value="Men">Men</option>
-        <option value="Women">Women</option>
-        <option value="Kids">Kids</option>
-      </select>
-    </div>
-
-    <div id="productGrid" class="grid"></div>
-    <div id="root"></div>
-
-    <!-- React -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-
-    <script>
-    (function(){
-      const { useState, useEffect } = React;
-      const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxENH68uAePu7ORZJawjjXVqvTJfXB8gpBVNfizrdOmyURo8vu4edhr7h9BDc1SdSxlEg/exec';
-      const DRIVE_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbzQFujhLNbFusQfPxsHgQfoXAwcQz-caWSs0JAZDR9VdqEWY_PdKNIDi6ELvFQK03LG/exec';
-      const WHATSAPP_NUMBER_WITHOUT_PLUS = '919978653852';
-
-      async function fetchSheet() {
-        const res = await fetch(SHEET_URL);
-        const json = await res.json();
-        return json.data || [];
-      }
-
-      function normalizeImageUrl(cell) {
-        if (!cell) return '';
-        let val = String(cell);
-        if (val.includes(',')) val = val.split(',')[0].trim();
-        if (val.includes('\n')) val = val.split('\n')[0].trim();
-        if (val.includes('raw.githubusercontent.com')) return val;
-        if (val.includes('github.com') && val.includes('/blob/'))
-          return val.replace('https://github.com/','https://raw.githubusercontent.com/').replace('/blob/','/');
-        if (val.includes('drive.google.com/file/d/')) {
-          const id = val.split('/d/')[1].split('/')[0];
-          return `https://drive.google.com/uc?export=view&id=${id}`;
-        }
-        return val;
-      }
-
-      function App(){
-        const [products, setProducts] = useState([]);
-        const [filtered, setFiltered] = useState([]);
-        const [cartOpen, setCartOpen] = useState(false);
-        const [cart, setCart] = useState(()=>JSON.parse(localStorage.getItem('yf_cart')||'[]'));
-
-        useEffect(()=>{ fetchSheet().then(rows=>{
-          const normalized = rows.map(r=>({
-            category:r.Category||r.category||'',
-            pname:r.Pname||r.pname||r.Product||'',
-            pdesc:r.Pdesc||r.pdesc||'',
-            psize:r.Psize||r.psize||'',
-            prate:r.Prate||r.prate||r.Price||'0',
-            pimage:normalizeImageUrl(r.Pimage||r.pimage||r.Image||'')
-          }));
-          setProducts(normalized); setFiltered(normalized);
-        }); },[]);
-
-        useEffect(()=>{
-          localStorage.setItem('yf_cart', JSON.stringify(cart));
-          const badge = document.getElementById('cartCount');
-          if (badge) badge.textContent = cart.reduce((s,i)=>s+(+i.qty||0),0);
-        }, [cart]);
-
-        useEffect(()=>{
-          document.getElementById('openCartBtn').onclick = ()=>setCartOpen(true);
-        },[]);
-
-        function addToCart(p){
-          const key = `${p.pname}||${p.pimage}||${p.psize}`;
-          const idx = cart.findIndex(c => c._key === key);
-          if (idx > -1) {
-            const copy = [...cart]; copy[idx].qty += 1; setCart(copy);
-          } else setCart([...cart, {...p, qty:1, _key:key}]);
-          const t=document.createElement('div');
-          Object.assign(t.style,{position:'fixed',bottom:'20px',left:'50%',transform:'translateX(-50%)',background:'#25D366',color:'#fff',padding:'8px 14px',borderRadius:'8px',fontWeight:'700',zIndex:9999});
-          t.textContent='✅ Added to cart'; document.body.appendChild(t); setTimeout(()=>t.remove(),1200);
-        }
-
-        function changeQty(it,delta){setCart(cart.map(c=>c===it?{...c,qty:Math.max(1,c.qty+delta)}:c));}
-        function removeFromCart(it){setCart(cart.filter(c=>c!==it));}
-
-            // ✅ NEW CHECKOUT FUNCTION — creates actual JPG and uploads correctly
-async function confirmFinalOrder() {
-  if (cart.length === 0) {
-    alert('Cart empty');
-    return;
-  }
-
-  // 🔹 Ask user details
-  const custName = prompt('Enter your name:');
-  if (!custName) return alert('Name required');
-  const custCity = prompt('Enter your city:');
-  if (!custCity) return alert('City required');
-
-  // 🔹 Show loading overlay
-  const overlay = document.createElement('div');
-  overlay.id = 'loadingOverlay';
-  overlay.style.position = 'fixed';
-  overlay.style.inset = '0';
-  overlay.style.background = 'rgba(0,0,0,0.6)';
-  overlay.style.display = 'flex';
-  overlay.style.flexDirection = 'column';
-  overlay.style.justifyContent = 'center';
-  overlay.style.alignItems = 'center';
-  overlay.style.zIndex = 6000;
-  overlay.innerHTML = `
-    <div style="color:#fff;font-size:20px;font-weight:700;margin-bottom:12px;">⏳ Creating Order Image...</div>
-    <div style="width:64px;height:64px;border:6px solid rgba(255,255,255,0.2);border-top-color:#25D366;border-radius:50%;animation:spin 1s linear infinite;"></div>
-    <style>@keyframes spin{0%{transform:rotate(0);}100%{transform:rotate(360deg);}}</style>
-  `;
-  document.body.appendChild(overlay);
-
-  try {
-    // 🔹 Use html2canvas to capture cart modal as image
-    const cartEl = document.querySelector('.modal-content');
-    if (!cartEl) {
-      alert('Cart not visible for capture');
-      overlay.remove();
-      return;
-    }
-
-    // Load html2canvas if not already loaded
-    if (!window.html2canvas) {
-      await new Promise((res) => {
-        const s = document.createElement('script');
-        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-        s.onload = res;
-        document.body.appendChild(s);
-      });
-    }
-
-    const canvas = await html2canvas(cartEl, { backgroundColor: '#fff', scale: 2 });
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-    const base64 = dataUrl.split(',')[1];
-
-    // 🔹 Upload image to Drive
-    const filename = `Order_${custName}_${Date.now()}.jpg`;
-    const res = await fetch(DRIVE_UPLOAD_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ file: base64, filename })
-    });
-
-    const json = await res.json();
-    if (!json.success) throw new Error(json.error || 'Upload failed');
-
-    // 🔹 WhatsApp message with image link
-    const msg = `🛍️ *YES FASHION HUB NEW ORDER*\n\n👤 Name: ${custName}\n🏙️ City: ${custCity}\n\nView order image:\n${json.link}`;
-    window.open(`https://wa.me/${WHATSAPP_NUMBER_WITHOUT_PLUS}?text=${encodeURIComponent(msg)}`, '_blank');
-
-    alert('✅ Order image uploaded successfully!');
-    setCart([]);
-    setCartOpen(false);
-  } catch (err) {
-    console.error('Error creating image:', err);
-    alert('❌ Error creating/uploading image.');
-  } finally {
-    const ov = document.getElementById('loadingOverlay');
-    if (ov) ov.remove();
-  }
-  }
-
-        return React.createElement('div',null,
-          React.createElement('div',{className:'grid'},
-            filtered.map((p,idx)=>
-              React.createElement('div',{className:'card',key:idx},
-                React.createElement('img',{src:p.pimage||'https://via.placeholder.com/400x300?text=No+Image',alt:p.pname}),
-                React.createElement('h3',null,p.pname),
-                React.createElement('p',null,p.pdesc),
-                React.createElement('p',null,'Size: '+p.psize),
-                React.createElement('p',null,'₹'+p.prate),
-                React.createElement('button',{className:'btn',onClick:()=>addToCart(p)},'Add to Cart')
-              )
-            )
-          ),
-          cartOpen && React.createElement('div',{className:'modal'},
-            React.createElement('div',{className:'modal-content'},
-              React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
-                React.createElement('h3',null,'Your Cart'),
-                React.createElement('div',null,
-                  React.createElement('button',{className:'btn',onClick:confirmFinalOrder},'Checkout'),
-                  ' ',
-                  React.createElement('button',{className:'btn',onClick:()=>setCartOpen(false)},'Close')
-                )
-              ),
-              cart.length===0 ? React.createElement('div',null,'Cart is empty') :
-              React.createElement('div',null,
-                cart.map((c,i)=>
-                  React.createElement('div',{className:'cart-row',key:i},
-                    React.createElement('img',{src:c.pimage||'https://via.placeholder.com/80',alt:c.pname}),
-                    React.createElement('div',{style:{flex:1}},
-                      React.createElement('div',{style:{fontWeight:600}},c.pname),
-                      React.createElement('div',null,'₹'+c.prate+' x '+c.qty)
-                    ),
-                    React.createElement('div',null,
-                      React.createElement('button',{className:'qty-btn',onClick:()=>changeQty(c,-1)},'-'),
-                      React.createElement('button',{className:'qty-btn',onClick:()=>changeQty(c,1)},'+'),
-                      React.createElement('button',{className:'qty-btn',onClick:()=>removeFromCart(c)},'✖')
-                    )
-                  )
-                )
-              )
-            )
-          )
-        );
-      }
-
-      ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
-    })();
-    </script>
-  </body>
+fetchSheet();
+</script>
+</body>
 </html>
