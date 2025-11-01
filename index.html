@@ -1,4 +1,4 @@
-<!doctype html>
+  <!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
@@ -142,50 +142,69 @@ async function checkout(){
   $('modalRoot').appendChild(formDiv);
 }
 
-async function generatePDF(){
-  const name=$('uname').value,addr=$('uaddr').value,city=$('ucity').value,mob=$('umob').value;
-  if(!name||!city||!mob)return alert('Please fill all fields!');
-  $('modalRoot').innerHTML=`<div class='modal'><div class='modal-box'><div class='loader'></div><p>Processing your order...</p></div></div>`;
+
+  async function generatePDF() { 
+  const name = $('uname').value,
+        addr = $('uaddr').value,
+        city = $('ucity').value,
+        mob  = $('umob').value;
+
+  if (!name || !city || !mob) return alert('Please fill all fields!');
+
+  $('modalRoot').innerHTML = `
+    <div class='modal'>
+      <div class='modal-box'>
+        <div class='loader'></div>
+        <p>Processing your order...</p>
+      </div>
+    </div>`;
+
   const { jsPDF } = window.jspdf;
-  const doc=new jsPDF({unit:'pt',format:'a4'});
-  doc.setFontSize(18);doc.text("YES FASHION HUB",220,40);
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+
+  doc.setFontSize(18);
+  doc.text("YES FASHION HUB", 220, 40);
   doc.setFontSize(12);
-  doc.text(`Name: ${name}`,40,70);
-  doc.text(`Address: ${addr}`,40,85);
-  doc.text(`City: ${city}`,40,100);
-  doc.text(`Mobile: ${mob}`,40,115);
-  doc.line(40,125,550,125);
-  let y=145;let total=0;
+  doc.text(`Name: ${name}`, 40, 70);
+  doc.text(`Address: ${addr}`, 40, 85);
+  doc.text(`City: ${city}`, 40, 100);
+  doc.text(`Mobile: ${mob}`, 40, 115);
+  doc.line(40, 125, 550, 125);
+
+  let y = 145;
+  let total = 0;
   doc.setFontSize(13);
-  cart.forEach((c,i)=>{
-    const img=(c.Pimage||'').split(/[,]+/)[0];
-    const lineTotal=(+c.Prate)*c.qty; total+=lineTotal;
-    doc.text(`${i+1}. ${c.Pname}`,40,y);
-    doc.text(`Qty: ${c.qty}`,400,y);
-    doc.text(`₹${c.Prate}`,460,y);
-    doc.text(`= ₹${lineTotal}`,520,y);
-    y+=18;
-    if(img){try{
-      const a=document.createElement('img');a.src=img;
-      await new Promise(r=>a.onload=r);
-      doc.addImage(a,'JPEG',60,y,80,80);
-      y+=90;
-    }catch{}}
-  });
-  doc.line(40,y,550,y);
-  doc.text(`Grand Total: ₹${total}`,400,y+20);
-  const pdfBase64=btoa(doc.output());
-  const resp=await fetch(DRIVE_UPLOAD_URL,{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({file:pdfBase64,filename:`Order_${Date.now()}.pdf`})
-  });
-  const js=await resp.json();
-  $('modalRoot').innerHTML='';
-  if(js.success){
-    const msg=`Yes Fashion Hub - New Order\nName: ${name}\nCity: ${city}\nMobile: ${mob}\nTotal: ₹${total}\nOrder PDF: ${js.link}`;
-    window.open(`https://wa.me/${WHATSAPP_NUMBER_WITHOUT_PLUS}?text=${encodeURIComponent(msg)}`);
-    cart=[];$('cartCount').innerText='0';
-  }else alert('Upload failed: '+js.error);
+
+  for (const [i, c] of cart.entries()) {
+    const imgUrl = (c.Pimage || '').split(/[,]+/)[0];
+    const lineTotal = (+c.Prate) * c.qty;
+    total += lineTotal;
+
+    doc.text(`${i + 1}. ${c.Pname}`, 40, y);
+    doc.text(`Qty: ${c.qty}`, 400, y);
+    doc.text(`₹${c.Prate}`, 460, y);
+    doc.text(`= ₹${lineTotal}`, 520, y);
+    y += 18;
+
+    // ✅ Add image with proper await
+    if (imgUrl) {
+      try {
+        const imgEl = document.createElement('img');
+        imgEl.src = imgUrl;
+        await new Promise(res => imgEl.onload = res);
+        doc.addImage(imgEl, 'JPEG', 60, y, 80, 80);
+        y += 90;
+      } catch (e) {
+        console.warn("Image load failed:", e);
+      }
+    }
+  }
+
+  // Finish total
+  doc.text(`Total: ₹${total}`, 460, y + 30);
+
+  const pdfBlob = doc.output('blob');
+  // TODO: upload pdfBlob to Drive here
 }
 
 fetchSheet();
