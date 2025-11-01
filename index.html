@@ -104,7 +104,7 @@ function viewCollection(p){
   const sizes=(p.Psize||'').split(/[,]+/).filter(Boolean);
   const modal=document.createElement('div');
   modal.className='modal';
-  modal.innerHTML=`
+  modal.innerHTML='
     <div class='modal-box'>
       <img id='mainImg' src='${imgs[0]||''}' style='width:100%;height:300px;object-fit:cover;border-radius:8px;'>
       <div class='thumbs'>${imgs.map(u=>`<img src='${u}' onclick='document.getElementById("mainImg").src="${u}"'>`).join('')}</div>
@@ -114,7 +114,7 @@ function viewCollection(p){
       ${sizes.length?`<select id="sizeSel" style="width:100%;padding:8px;margin:8px 0;">${sizes.map(s=>`<option>${s}</option>`).join('')}</select>`:''}
       <button class='btn' onclick='addToCart({...${JSON.stringify(p)}, Psize: document.getElementById("sizeSel")?.value || ""})'>Add to Cart</button>
       <button class='btn' onclick='closeModal()'>Close</button>
-    </div>`;
+    </div>';
   $('modalRoot').innerHTML=''; $('modalRoot').appendChild(modal);
 }
 
