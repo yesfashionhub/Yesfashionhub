@@ -1,0 +1,90 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Yes Fashion Hub - Collection</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body{font-family:'Inter',sans-serif;margin:0;background:#fafafa;color:#222;}
+    header{background:#25D366;color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;padding:14px;}
+    .card{background:#fff;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);overflow:hidden;transition:transform .2s;}
+    .card:hover{transform:scale(1.02);}
+    .card img{width:100%;height:180px;object-fit:cover;}
+    .btn{background:#25D366;color:#fff;border:none;border-radius:6px;padding:6px 10px;margin:5px;font-weight:600;cursor:pointer;}
+    .btn:hover{background:#1eb85c;}
+  </style>
+</head>
+<body>
+
+<header>
+  <h2>👗 Yes Fashion Hub</h2>
+  <button onclick="window.location='index.html'" class="btn">🏠 Home</button>
+</header>
+
+<div id="productTitle" style="text-align:center;font-weight:600;margin-top:10px;"></div>
+<div id="collectionGrid" class="grid"></div>
+
+<script>
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbygSw84ilE06oLMHZRsVD4jxEMvFECccQKl6A80UbkjtNpO_sAwbC_aS1hSjhIghPre/exec"; 
+let allProducts = [];
+let cart = JSON.parse(localStorage.getItem('yf_cart')||'[]');
+
+// ===== Fetch All Products =====
+async function fetchSheet(){
+  return new Promise((resolve,reject)=>{
+    const cb='cb_'+Date.now();
+    window[cb]=(d)=>{
+      allProducts = d.data || [];
+      renderCollection();
+      delete window[cb];
+      resolve();
+    };
+    const s=document.createElement('script');
+    s.src=`${SHEET_URL}?callback=${cb}`;
+    s.onerror=()=>reject(new Error("Network error"));
+    document.body.appendChild(s);
+  });
+}
+
+// ===== Render Selected Product Collection =====
+function renderCollection(){
+  const pid = new URLSearchParams(window.location.search).get('pid');
+  const product = allProducts.find(p=>String(p.Psku)===pid);
+  if(!product){document.body.innerHTML="<p style='text-align:center;margin-top:50px;'>Product not found.</p>";return;}
+  document.getElementById('productTitle').innerText = `${product.Pname} — ₹${product.Prate}`;
+
+  const imgs=(product.Pimage||'').split(/[,]+/).filter(Boolean);
+  const sizes=(product.Psize||'').split(/[,]+/).filter(Boolean);
+  const grid=document.getElementById('collectionGrid');
+  grid.innerHTML='';
+
+  imgs.forEach((img,i)=>{
+    const div=document.createElement('div');
+    div.className='card';
+    div.innerHTML=`
+      <img src="${img}" alt="Design ${i+1}">
+      <div style="padding:6px;">
+        ${sizes.length?`<select id="size_${i}" style="width:100%;padding:6px;border:1px solid #ccc;border-radius:6px;">${sizes.map(s=>`<option>${s}</option>`).join('')}</select>`:''}
+        <button class="btn" onclick='addToCart(${JSON.stringify(product).replace(/"/g,"&quot;")}, ${i})'>Add to Cart</button>
+      </div>
+    `;
+    grid.appendChild(div);
+  });
+}
+
+function addToCart(p, i){
+  const sizeSel=document.getElementById('size_'+i);
+  const size=sizeSel?sizeSel.value:'';
+  const key=p.Pname+'|'+size;
+  const ex=cart.find(c=>c.key===key);
+  if(ex)ex.qty+=1;else cart.push({...p,qty:1,key,Psize:size});
+  localStorage.setItem('yf_cart',JSON.stringify(cart));
+  alert('✅ Added to cart');
+}
+
+fetchSheet();
+</script>
+
+</body>
+</html>
