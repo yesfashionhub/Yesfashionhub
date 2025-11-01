@@ -72,14 +72,37 @@ function renderProducts(){
     grid.appendChild(card);
   });
 }
-function fetchSheet(){
-  fetch(SHEET_URL).then(r=>r.json()).then(j=>{
-    products=j.data;
-    const cats=[...new Set(products.map(p=>p.Categories))].filter(Boolean);
-    $('categoryFilter').innerHTML='<option value="All">All</option>'+cats.map(c=>`<option>${c}</option>`).join('');
+
+async function fetchSheet() {
+  try {
+    const res = await fetch(SHEET_URL);
+    const j = await res.json();
+
+    if (!j || !j.data) {
+      console.error("No data found in Google Sheet response");
+      return;
+    }
+
+    products = j.data;
+
+    // ✅ Extract unique categories, ignore blanks
+    const cats = [...new Set(products.map(p => (p.Categories || '').trim()))].filter(Boolean);
+
+    // ✅ Add category filter dropdown
+    document.getElementById('categoryFilter').innerHTML =
+      '<option value="All">All</option>' +
+      cats.map(c => `<option>${c}</option>`).join('');
+
+    // ✅ Render products
     renderProducts();
-  });
+
+  } catch (err) {
+    console.error("Error fetching sheet data:", err);
+    alert("⚠️ Failed to load products. Please check your internet or Sheet URL.");
+  }
 }
+
+  
 function addToCart(p){
   const e=cart.find(x=>x.Pname===p.Pname);
   if(e)e.qty++; else{p.qty=1;cart.push(p);}
