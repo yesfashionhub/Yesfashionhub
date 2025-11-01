@@ -1,228 +1,214 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YES FASHION HUB</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<style>
-  body {
-    font-family: 'Poppins', sans-serif;
-    margin: 0; padding: 0;
-    background: #fafafa;
-    color: #333;
-  }
-  header {
-    background: linear-gradient(90deg, #000, #444);
-    color: #fff;
-    padding: 12px 0;
-    text-align: center;
-    font-size: 20px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    position: sticky;
-    top: 0; z-index: 1000;
-  }
-  #controls { display: flex; justify-content: center; gap: 10px; margin: 15px; }
-  select, input {
-    padding: 8px 10px; border-radius: 6px;
-    border: 1px solid #ccc; font-size: 14px;
-  }
-  #productGrid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 15px; padding: 20px;
-  }
-  .card {
-    background: #fff; border-radius: 10px;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-    padding: 10px; transition: 0.3s;
-  }
-  .card:hover { transform: scale(1.02); }
-  .card img { width: 100%; height: 240px; object-fit: cover; border-radius: 8px; }
-  .card h3 { font-size: 15px; margin: 10px 0 5px; }
-  .card p { font-size: 13px; color: #777; }
-  .btn {
-    background: #000; color: #fff;
-    border: none; padding: 7px 12px;
-    border-radius: 6px; cursor: pointer; font-size: 13px;
-  }
-  .btn:hover { background: #222; }
-  #cartIcon {
-    position: fixed; top: 15px; right: 20px;
-    background: #000; color: #fff;
-    padding: 10px 14px; border-radius: 50%;
-    cursor: pointer; font-weight: bold;
-  }
-  #cartCount {
-    position: absolute; top: -4px; right: -4px;
-    background: red; color: #fff; font-size: 10px;
-    padding: 2px 5px; border-radius: 50%;
-  }
-  .modal {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.6);
-    display: flex; justify-content: center; align-items: center;
-    z-index: 2000;
-  }
-  .modal-box {
-    background: #fff; padding: 20px 25px;
-    border-radius: 10px; width: 90%; max-width: 400px;
-  }
-  .loader {
-    border: 4px solid #ccc;
-    border-top: 4px solid #000;
-    border-radius: 50%; width: 35px; height: 35px;
-    margin: 0 auto 15px; animation: spin 1s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-</style>
+  <meta charset="utf-8" />
+  <title>Yes Fashion Hub - Smart Store</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <style>
+    body{font-family:'Inter',sans-serif;margin:0;background:#f6f6f6;color:#222;}
+    header{background:#25D366;color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:1000;}
+    .cart-btn{background:#128C7E;border:none;border-radius:50%;width:46px;height:46px;font-size:22px;color:#fff;cursor:pointer;position:relative;}
+    .cart-count{position:absolute;top:-6px;right:-6px;background:#ff3b30;color:#fff;border-radius:50%;font-size:12px;padding:3px 7px;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;padding:14px;}
+    .card{background:#fff;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);overflow:hidden;transition:transform 0.2s;}
+    .card:hover{transform:scale(1.02);}
+    .card img{width:100%;height:170px;object-fit:cover;}
+    .card h3{margin:8px;font-size:15px;}
+    .card p{margin:4px 8px;font-size:13px;color:#555;}
+    .btn{background:#25D366;color:#fff;border:none;border-radius:6px;padding:8px 12px;margin:8px;font-weight:600;cursor:pointer;}
+    .btn:hover{background:#20ba5a;}
+    .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:2000;}
+    .modal-box{background:#fff;padding:20px;border-radius:10px;width:90%;max-width:400px;}
+    .loader{width:50px;height:50px;border:5px solid #ccc;border-top-color:#25D366;border-radius:50%;animation:spin 1s linear infinite;margin:auto;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+  </style>
 </head>
 <body>
-<header>YES FASHION HUB</header>
 
-<div id="cartIcon">🛒<span id="cartCount">0</span></div>
+<header>
+  <h2>👗 Yes Fashion Hub</h2>
+  <button id="cartBtn" class="cart-btn">🛒<span id="cartCount" class="cart-count">0</span></button>
+</header>
 
-<div id="controls">
-  <select id="categoryFilter"><option>All</option></select>
-  <input type="text" id="searchBox" placeholder="Search products...">
+<div style="padding:10px;">
+  <input id="searchBox" placeholder="Search products..." style="padding:10px;width:100%;border-radius:8px;border:1px solid #ccc;">
+  <select id="categoryFilter" style="margin-top:8px;padding:10px;width:100%;border-radius:8px;border:1px solid #ccc;">
+    <option value="All">All Categories</option>
+  </select>
 </div>
 
-<div id="productGrid"></div>
+<div id="productGrid" class="grid"></div>
+
 <div id="modalRoot"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbz9ETeEM9279GUc0RBPmV0J5vQXfEWGBsksJH3m__ZNaKXe9-ybsBALCkyn8BS2z8Pa/exec";
 const DRIVE_UPLOAD_URL = "https://script.google.com/macros/s/AKfycbz9ETeEM9279GUc0RBPmV0J5vQXfEWGBsksJH3m__ZNaKXe9-ybsBALCkyn8BS2z8Pa/exec";
 
+const WHATSAPP_NO = "919978653852"; // your WhatsApp number without +
+
 let products = [];
-let cart = [];
+let cart = JSON.parse(localStorage.getItem('yf_cart')||'[]');
+updateCartBadge();
 
-/** 🟢 Fetch Google Sheet Data */
-window.addEventListener("message", (event) => {
-  if (event.data?.type === "YFH_DATA") {
-    products = event.data.data.data;
-    const cats = [...new Set(products.map(p => p.Categories))].filter(Boolean);
-    document.getElementById('categoryFilter').innerHTML =
-      '<option value="All">All</option>' + cats.map(c => `<option>${c}</option>`).join('');
+// ===== Fetch Sheet Data =====
+async function fetchSheet(){
+  try{
+    const r = await fetch(SHEET_URL);
+    const j = await r.json();
+    products = j.data || [];
+    const cats = [...new Set(products.map(p=>p.Categories))].filter(Boolean);
+    const sel = document.getElementById('categoryFilter');
+    sel.innerHTML = '<option value="All">All</option>'+cats.map(c=>`<option>${c}</option>`).join('');
     renderProducts();
-  }
-});
-fetch(SHEET_URL);
+  }catch(err){ console.error('Error fetching sheet data:',err); }
+}
+fetchSheet();
 
-/** 🟢 Render Products */
-function renderProducts() {
-  const grid = document.getElementById('productGrid');
+// ===== Render Products =====
+function renderProducts(){
+  const q = document.getElementById('searchBox').value.toLowerCase();
   const cat = document.getElementById('categoryFilter').value;
-  const search = document.getElementById('searchBox').value.toLowerCase();
-  const filtered = products.filter(p =>
-    (cat === 'All' || p.Categories === cat) &&
-    (!search || (p.Pname && p.Pname.toLowerCase().includes(search)))
-  );
+  const grid = document.getElementById('productGrid');
+  grid.innerHTML = '';
 
-  grid.innerHTML = filtered.map(p => {
-    const img = (p.Pimage || '').split(',')[0];
-    const rate = p.Prate || 0;
-    return `
-    <div class="card">
+  const filtered = products.filter(p=>{
+    const matchQ = !q || (p.Pname||'').toLowerCase().includes(q);
+    const matchCat = (cat==='All') || p.Categories===cat;
+    return matchQ && matchCat;
+  });
+
+  filtered.forEach(p=>{
+    const div=document.createElement('div');
+    div.className='card';
+    const img=(p.Pimage||'').split(/[,]+/)[0];
+    div.innerHTML=`
       <img src="${img}" alt="${p.Pname}">
       <h3>${p.Pname}</h3>
-      <p>₹${rate}</p>
-      <button class="btn" onclick='addToCart(${JSON.stringify(p)})'>Add to Cart</button>
-    </div>`;
-  }).join('');
+      <p>${p.Pdesc||''}</p>
+      <p>Rate: ₹${p.Prate} ${(p.Pgst||'').toLowerCase().includes('inc')?'(Incl. GST)':'(Excl. GST)'}</p>
+      <button class="btn" onclick='addToCart(${JSON.stringify(p).replace(/"/g,"&quot;")})'>Add to Cart</button>
+    `;
+    grid.appendChild(div);
+  });
+}
+document.getElementById('searchBox').oninput=renderProducts;
+document.getElementById('categoryFilter').onchange=renderProducts;
+
+// ===== Cart =====
+function addToCart(p){
+  const key=p.Pname+'|'+p.Psize;
+  const ex=cart.find(c=>c.key===key);
+  if(ex)ex.qty+=1;
+  else cart.push({...p,qty:1,key});
+  localStorage.setItem('yf_cart',JSON.stringify(cart));
+  updateCartBadge();
+  toast('✅ Added to cart');
+}
+function updateCartBadge(){
+  document.getElementById('cartCount').innerText = cart.reduce((a,b)=>a+b.qty,0);
+}
+function toast(msg){
+  const t=document.createElement('div');
+  t.textContent=msg;
+  Object.assign(t.style,{position:'fixed',bottom:'20px',left:'50%',transform:'translateX(-50%)',background:'#25D366',color:'#fff',padding:'10px 16px',borderRadius:'8px',zIndex:9999});
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),1200);
 }
 
-document.getElementById('categoryFilter').onchange = renderProducts;
-document.getElementById('searchBox').oninput = renderProducts;
+// ===== Cart Modal =====
+document.getElementById('cartBtn').onclick=()=>showCart();
 
-/** 🟢 Cart System */
-function addToCart(p) {
-  const ex = cart.find(x => x.Psku === p.Psku);
-  if (ex) ex.qty++; else p.qty = 1, cart.push(p);
-  document.getElementById('cartCount').textContent = cart.reduce((a,b)=>a+b.qty,0);
-  alert(`${p.Pname} added to cart!`);
-}
-
-/** 🟢 Cart Modal */
-document.getElementById('cartIcon').onclick = () => {
-  if (!cart.length) return alert('Cart is empty!');
-  let html = cart.map((c,i)=>`
-    <div style="border-bottom:1px solid #eee;padding:6px 0;">
-      ${i+1}. ${c.Pname} — ₹${c.Prate} × ${c.qty}
-    </div>`).join('');
-  html += `<div style="text-align:center;margin-top:10px;">
-      <button class='btn' onclick='checkout()'>Checkout</button>
+function showCart(){
+  const modal=document.createElement('div');
+  modal.className='modal';
+  modal.innerHTML=`
+    <div class='modal-box'>
+      <h3>Your Cart</h3>
+      ${cart.length===0?'<p>Cart is empty</p>':
+        cart.map((c,i)=>`
+          <div style='display:flex;align-items:center;margin:6px 0;border-bottom:1px solid #eee;padding:6px 0;'>
+            <img src='${(c.Pimage||'').split(',')[0]}' style='width:50px;height:50px;object-fit:cover;border-radius:6px;margin-right:8px;'>
+            <div style='flex:1;'>
+              <b>${c.Pname}</b><br>₹${c.Prate} × ${c.qty}
+            </div>
+            <button class='btn' style='padding:4px 8px;' onclick='removeFromCart(${i})'>❌</button>
+          </div>`).join('')}
+      ${cart.length?`<div style='text-align:right;font-weight:700;margin:10px 0;'>Total: ₹${cart.reduce((s,i)=>s+(+i.Prate*i.qty),0)}</div>
+      <button class='btn' onclick='checkout()'>Checkout</button>`:''}
+      <button class='btn' onclick='closeModal()'>Close</button>
     </div>`;
-  document.getElementById('modalRoot').innerHTML =
-    `<div class='modal'><div class='modal-box'>
-      <h3>🛒 Your Cart</h3>${html}
-    </div></div>`;
-};
+  document.getElementById('modalRoot').innerHTML='';document.getElementById('modalRoot').appendChild(modal);
+}
+function closeModal(){document.getElementById('modalRoot').innerHTML='';}
+function removeFromCart(i){cart.splice(i,1);localStorage.setItem('yf_cart',JSON.stringify(cart));updateCartBadge();showCart();}
 
-/** 🟢 Checkout */
+// ===== Checkout =====
 async function checkout(){
-  document.getElementById('modalRoot').innerHTML =
-    `<div class='modal'><div class='modal-box'>
-      <h3>Enter Your Details</h3>
-      <input id='uname' placeholder='Full Name'><br><br>
-      <input id='uaddr' placeholder='Address'><br><br>
-      <input id='ucity' placeholder='City'><br><br>
-      <input id='umob' placeholder='Mobile'><br><br>
-      <button class='btn' onclick='generatePDF()'>Confirm Order</button>
-    </div></div>`;
+  if(cart.length===0)return;
+  const formHtml=`
+    <div class='modal'>
+      <div class='modal-box'>
+        <h3>Enter Customer Info</h3>
+        <input id='uname' placeholder='Name' style='width:100%;padding:8px;margin:4px 0;'>
+        <input id='uaddr' placeholder='Address' style='width:100%;padding:8px;margin:4px 0;'>
+        <input id='ucity' placeholder='City' style='width:100%;padding:8px;margin:4px 0;'>
+        <input id='umob' placeholder='Mobile' style='width:100%;padding:8px;margin:4px 0;'>
+        <button class='btn' onclick='generatePDF()'>Confirm</button>
+        <button class='btn' onclick='closeModal()'>Cancel</button>
+      </div>
+    </div>`;
+  document.getElementById('modalRoot').innerHTML=formHtml;
 }
 
-/** 🟢 Generate PDF + Upload + WhatsApp */
 async function generatePDF(){
-  const name=document.getElementById('uname').value.trim(),
-        addr=document.getElementById('uaddr').value.trim(),
-        city=document.getElementById('ucity').value.trim(),
-        mob=document.getElementById('umob').value.trim();
-  if(!name||!city||!mob)return alert("Please fill all fields!");
-
-  document.getElementById('modalRoot').innerHTML=
-    `<div class='modal'><div class='modal-box'><div class='loader'></div>
-      <p>Creating your order PDF...</p></div></div>`;
+  const name=$('uname').value,addr=$('uaddr').value,city=$('ucity').value,mob=$('umob').value;
+  if(!name||!city||!mob)return alert('Please fill all fields!');
+  $('modalRoot').innerHTML=`<div class='modal'><div class='modal-box'><div class='loader'></div><p>Processing your order...</p></div></div>`;
 
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-  doc.setFontSize(18); doc.text("YES FASHION HUB", 200, 40);
+  const doc=new jsPDF({unit:'pt',format:'a4'});
+  doc.setFontSize(18);doc.text("YES FASHION HUB",220,40);
   doc.setFontSize(12);
   doc.text(`Name: ${name}`,40,70);
   doc.text(`Address: ${addr}`,40,85);
   doc.text(`City: ${city}`,40,100);
   doc.text(`Mobile: ${mob}`,40,115);
   doc.line(40,125,550,125);
-
-  let y=145,total=0;
+  let y=145;let total=0;
   cart.forEach((c,i)=>{
-    const lineTotal=(+c.Prate||0)*c.qty; total+=lineTotal;
+    const lineTotal=(+c.Prate)*c.qty; total+=lineTotal;
     doc.text(`${i+1}. ${c.Pname}`,40,y);
     doc.text(`Qty: ${c.qty}`,400,y);
     doc.text(`₹${c.Prate}`,460,y);
     doc.text(`= ₹${lineTotal}`,520,y);
-    y+=20;
+    y+=18;
   });
-  doc.line(40,y,550,y); y+=20;
+  y+=20;
   doc.text(`Grand Total: ₹${total}`,400,y);
 
-  const pdfBase64 = btoa(doc.output());
-  const res = await fetch(DRIVE_UPLOAD_URL, {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ file: pdfBase64, filename:`Order_${Date.now()}.pdf` })
+  const pdfBlob=doc.output('blob');
+  const base64=await new Promise(r=>{
+    const reader=new FileReader();
+    reader.onloadend=()=>r(reader.result.split(',')[1]);
+    reader.readAsDataURL(pdfBlob);
   });
-  const data = await res.json();
-  if(data.success){
-    const msg = `New order from ${name}, ${city}, ${mob}%0A${data.link}`;
-    window.open(`https://wa.me/919879118722?text=${msg}`,'_blank');
-    cart=[]; document.getElementById('cartCount').textContent='0';
-    document.getElementById('modalRoot').innerHTML='';
-  }else{
-    alert("Upload failed: "+data.error);
-  }
+
+  const filename=`Order_${Date.now()}.pdf`;
+  const res=await fetch(DRIVE_UPLOAD_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({file:base64,filename})});
+  const json=await res.json();
+  if(!json.success)return alert('Upload failed!');
+  const link=json.link;
+  const msg=`🛍️ *Yes Fashion Hub - New Order* %0A%0A👤 Name: ${name}%0A🏙️ City: ${city}%0A📞 Mobile: ${mob}%0A%0A🧾 Order Total: ₹${total}%0A📎 PDF: ${link}`;
+  window.open(`https://wa.me/${WHATSAPP_NO}?text=${msg}`,'_blank');
+
+  localStorage.removeItem('yf_cart');
+  cart=[];updateCartBadge();closeModal();
 }
+function $(id){return document.getElementById(id);}
 </script>
 </body>
 </html>
