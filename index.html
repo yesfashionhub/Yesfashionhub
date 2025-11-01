@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html>
 <head>
@@ -17,8 +18,11 @@
     .card p{margin:4px 8px;font-size:13px;color:#555;}
     .btn{background:#25D366;color:#fff;border:none;border-radius:6px;padding:8px 12px;margin:8px;font-weight:600;cursor:pointer;}
     .btn:hover{background:#1eb85c;}
-    .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;}
-    .modal-box{background:#fff;padding:20px;border-radius:10px;width:90%;max-width:400px;}
+    .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:1000;}
+    .modal-box{background:#fff;padding:20px;border-radius:10px;width:90%;max-width:500px;max-height:90vh;overflow:auto;}
+    .thumbs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+    .thumbs img{width:70px;height:70px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid transparent;}
+    .thumbs img:hover{border-color:#25D366;}
     .loader{width:50px;height:50px;border:5px solid #ccc;border-top-color:#25D366;border-radius:50%;animation:spin 1s linear infinite;margin:auto;}
     @keyframes spin{to{transform:rotate(360deg);}}
   </style>
@@ -50,164 +54,85 @@ let products = [];
 let cart = JSON.parse(localStorage.getItem('yf_cart')||'[]');
 updateCartBadge();
 
-// ===== FETCH SHEET VIA JSONP (MOBILE SAFE) =====
+// ==== FETCH SHEET (JSONP) ====
 async function fetchSheet(){
   return new Promise((resolve,reject)=>{
     const cb='cb_'+Date.now();
     window[cb]=(d)=>{
-      try {
-        products = (d && d.data) ? d.data : [];
-        if(!products.length){ console.error("⚠ No products found"); return; }
-        const cats=[...new Set(products.map(p=>p.Categories))].filter(Boolean);
-        document.getElementById('categoryFilter').innerHTML=
-          '<option value="All">All</option>'+cats.map(c=>`<option>${c}</option>`).join('');
-        renderProducts();
-        delete window[cb];
-        resolve();
-      }catch(err){console.error("Fetch parse error",err);reject(err);}
+      products = d.data || [];
+      const cats=[...new Set(products.map(p=>p.Categories))].filter(Boolean);
+      $('categoryFilter').innerHTML='<option value="All">All</option>'+cats.map(c=>`<option>${c}</option>`).join('');
+      renderProducts();
+      delete window[cb]; resolve();
     };
     const s=document.createElement('script');
-    s.src=`${SHEET_URL}?callback=${cb}&_=${Date.now()}`;
-    s.async=true;
-    s.onerror=()=>reject(new Error("❌ Network error loading sheet"));
+    s.src=`${SHEET_URL}?callback=${cb}`;
+    s.onerror=()=>reject(new Error("Network error"));
     document.body.appendChild(s);
   });
 }
 fetchSheet();
 
-// ===== RENDER PRODUCTS =====
+// ==== RENDER PRODUCTS ====
 function renderProducts(){
-  const q=document.getElementById('searchBox').value.toLowerCase();
-  const cat=document.getElementById('categoryFilter').value;
-  const grid=document.getElementById('productGrid');
-  grid.innerHTML='';
+  const q=$('searchBox').value.toLowerCase();
+  const cat=$('categoryFilter').value;
+  const grid=$('productGrid'); grid.innerHTML='';
   const filtered=products.filter(p=>{
     const mq=!q||(p.Pname||'').toLowerCase().includes(q);
     const mc=(cat==='All')||p.Categories===cat;
     return mq&&mc;
   });
-
-  if(filtered.length===0){
-    grid.innerHTML="<p style='text-align:center;width:100%;color:#999;'>No products found.</p>";
-    return;
-  }
-
   filtered.forEach(p=>{
+    const imgs=(p.Pimage||'').split(/[,]+/).filter(Boolean);
     const div=document.createElement('div');
     div.className='card';
-    const imgs=(p.Pimage||'').split(/[,]+/).filter(Boolean);
-    const mainImg=imgs[0]||'';
-    const sizes=(p.Psize||'').split(/[,]+/).filter(Boolean);
     div.innerHTML=`
-      <img src="${mainImg}" alt="${p.Pname}" loading="lazy">
+      <img src="${imgs[0]||''}" alt="${p.Pname}">
       <h3>${p.Pname}</h3>
       <p>${p.Pdesc||''}</p>
-      <p><b>₹${p.Prate}</b> ${(p.Pgst||'').toLowerCase().includes('inc')?'(Incl. GST)':'(Excl. GST)'}</p>
-      ${sizes.length?`<select id="size_${p.Psku}" style="width:90%;padding:6px;margin:5px;">${sizes.map(s=>`<option>${s}</option>`).join('')}</select>`:''}
-      <button class='btn' onclick='addToCart(${JSON.stringify(p).replace(/"/g,"&quot;")})'>Add</button>
-    `;
+      <button class='btn' onclick='viewCollection(${JSON.stringify(p).replace(/"/g,"&quot;")})'>View Full Collection</button>`;
     grid.appendChild(div);
   });
 }
-document.getElementById('searchBox').oninput=renderProducts;
-document.getElementById('categoryFilter').onchange=renderProducts;
+$('searchBox').oninput=renderProducts;
+$('categoryFilter').onchange=renderProducts;
 
-// ===== CART =====
+// ==== VIEW FULL COLLECTION ====
+function viewCollection(p){
+  const imgs=(p.Pimage||'').split(/[,]+/).filter(Boolean);
+  const sizes=(p.Psize||'').split(/[,]+/).filter(Boolean);
+  const modal=document.createElement('div');
+  modal.className='modal';
+  modal.innerHTML=`
+    <div class='modal-box'>
+      <img id='mainImg' src='${imgs[0]||''}' style='width:100%;height:300px;object-fit:cover;border-radius:8px;'>
+      <div class='thumbs'>${imgs.map(u=>`<img src='${u}' onclick='document.getElementById("mainImg").src="${u}"'>`).join('')}</div>
+      <h3>${p.Pname}</h3>
+      <p>${p.Pdesc||''}</p>
+      <p><b>₹${p.Prate}</b> ${(p.Pgst||'').toLowerCase().includes('inc')?'(Incl. GST)':'(Excl. GST)'}</p>
+      ${sizes.length?`<select id="sizeSel" style="width:100%;padding:8px;margin:8px 0;">${sizes.map(s=>`<option>${s}</option>`).join('')}</select>`:''}
+      <button class='btn' onclick='addToCart({...${JSON.stringify(p)}, Psize: document.getElementById("sizeSel")?.value || ""})'>Add to Cart</button>
+      <button class='btn' onclick='closeModal()'>Close</button>
+    </div>`;
+  $('modalRoot').innerHTML=''; $('modalRoot').appendChild(modal);
+}
+
+// ==== BASIC CART + HELPERS ====
 function addToCart(p){
-  const sizeSel=document.getElementById('size_'+p.Psku);
-  const size=sizeSel?sizeSel.value:'';
-  const key=p.Pname+'|'+size;
+  const key=p.Pname+'|'+p.Psize;
   const ex=cart.find(c=>c.key===key);
-  if(ex)ex.qty+=1;else cart.push({...p,qty:1,key,Psize:size});
+  if(ex)ex.qty+=1;else cart.push({...p,qty:1,key});
   localStorage.setItem('yf_cart',JSON.stringify(cart));
-  updateCartBadge();
-  toast('✅ Added to cart');
+  updateCartBadge(); toast('Added to cart');
 }
-function updateCartBadge(){
-  document.getElementById('cartCount').innerText=cart.reduce((a,b)=>a+b.qty,0);
-}
+function updateCartBadge(){ $('cartCount').innerText=cart.reduce((a,b)=>a+b.qty,0); }
+function closeModal(){ $('modalRoot').innerHTML=''; }
 function toast(msg){
   const t=document.createElement('div');
   t.textContent=msg;
   Object.assign(t.style,{position:'fixed',bottom:'20px',left:'50%',transform:'translateX(-50%)',background:'#25D366',color:'#fff',padding:'10px 16px',borderRadius:'8px',zIndex:9999});
-  document.body.appendChild(t);
-  setTimeout(()=>t.remove(),1200);
-}
-
-// ===== CART MODAL =====
-document.getElementById('cartBtn').onclick=()=>showCart();
-function showCart(){
-  const modal=document.createElement('div');
-  modal.className='modal';
-  modal.innerHTML=`
-  <div class='modal-box'>
-    <h3>Your Cart</h3>
-    ${cart.length===0?'<p>Cart is empty</p>':
-      cart.map((c,i)=>`
-        <div style='display:flex;align-items:center;margin:6px 0;border-bottom:1px solid #eee;padding:6px 0;'>
-          <img src='${(c.Pimage||'').split(',')[0]}' style='width:50px;height:50px;object-fit:cover;border-radius:6px;margin-right:8px;'>
-          <div style='flex:1;'>
-            <b>${c.Pname}</b><br>${c.Psize?`Size: ${c.Psize}<br>`:''}₹${c.Prate} × ${c.qty}
-          </div>
-          <button class='btn' style='padding:4px 8px;' onclick='removeFromCart(${i})'>❌</button>
-        </div>`).join('')}
-    ${cart.length?`<div style='text-align:right;font-weight:700;margin:10px 0;'>Total: ₹${cart.reduce((s,i)=>s+(+i.Prate*i.qty),0)}</div>
-    <button class='btn' onclick='checkout()'>Checkout</button>`:''}
-    <button class='btn' onclick='closeModal()'>Close</button>
-  </div>`;
-  document.getElementById('modalRoot').innerHTML='';
-  document.getElementById('modalRoot').appendChild(modal);
-}
-function closeModal(){document.getElementById('modalRoot').innerHTML='';}
-function removeFromCart(i){cart.splice(i,1);localStorage.setItem('yf_cart',JSON.stringify(cart));updateCartBadge();showCart();}
-
-// ===== CHECKOUT & PDF =====
-async function checkout(){
-  if(cart.length===0)return;
-  const html=`
-    <div class='modal'><div class='modal-box'>
-      <h3>Customer Info</h3>
-      <input id='uname' placeholder='Name' style='width:100%;padding:8px;margin:4px 0;'>
-      <input id='uaddr' placeholder='Address' style='width:100%;padding:8px;margin:4px 0;'>
-      <input id='ucity' placeholder='City' style='width:100%;padding:8px;margin:4px 0;'>
-      <input id='umob' placeholder='Mobile' style='width:100%;padding:8px;margin:4px 0;'>
-      <button class='btn' onclick='generatePDF()'>Confirm</button>
-      <button class='btn' onclick='closeModal()'>Cancel</button>
-    </div></div>`;
-  document.getElementById('modalRoot').innerHTML=html;
-}
-
-async function generatePDF(){
-  const name=$('uname').value,addr=$('uaddr').value,city=$('ucity').value,mob=$('umob').value;
-  if(!name||!city||!mob)return alert('Please fill all fields!');
-  $('modalRoot').innerHTML=`<div class='modal'><div class='modal-box'><div class='loader'></div><p>Processing your order...</p></div></div>`;
-  const { jsPDF } = window.jspdf;
-  const doc=new jsPDF({unit:'pt',format:'a4'});
-  doc.setFontSize(18);doc.text("YES FASHION HUB",220,40);
-  doc.setFontSize(12);
-  doc.text(`Name: ${name}`,40,70);
-  doc.text(`City: ${city}`,40,85);
-  doc.text(`Mobile: ${mob}`,40,100);
-  doc.line(40,115,550,115);
-  let y=135;let total=0;
-  cart.forEach((c,i)=>{
-    const lineTotal=(+c.Prate)*c.qty; total+=lineTotal;
-    doc.text(`${i+1}. ${c.Pname} (${c.Psize||''})`,40,y);
-    doc.text(`Qty: ${c.qty}`,400,y);
-    doc.text(`₹${c.Prate}`,460,y);
-    doc.text(`= ₹${lineTotal}`,520,y);
-    y+=18;
-  });
-  y+=20;doc.text(`Total: ₹${total}`,400,y);
-  const blob=doc.output('blob');
-  const base64=await new Promise(r=>{const fr=new FileReader();fr.onloadend=()=>r(fr.result.split(',')[1]);fr.readAsDataURL(blob);});
-  const filename=`Order_${Date.now()}.pdf`;
-  const res=await fetch(DRIVE_UPLOAD_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file:base64,filename})});
-  const j=await res.json();
-  if(!j.success)return alert('Upload failed!');
-  const msg=`🛍️ *Yes Fashion Hub Order* %0A👤 ${name}%0A🏙️ ${city}%0A📞 ${mob}%0A💰 Total ₹${total}%0A📎 PDF: ${j.link}`;
-  window.open(`https://wa.me/${WHATSAPP_NO}?text=${msg}`,'_blank');
-  localStorage.removeItem('yf_cart');cart=[];updateCartBadge();closeModal();
+  document.body.appendChild(t); setTimeout(()=>t.remove(),1200);
 }
 function $(id){return document.getElementById(id);}
 </script>
