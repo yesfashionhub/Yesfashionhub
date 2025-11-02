@@ -1,26 +1,30 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <title>Yes Fashion Hub</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body{font-family:'Inter',sans-serif;margin:0;background:#f5f5f5;color:#222;}
-    header{background:#25D366;color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;}
+    header{background:#25D366;color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;}
     .cart-btn{background:#128C7E;border:none;border-radius:50%;width:46px;height:46px;font-size:22px;color:#fff;cursor:pointer;position:relative;}
     .cart-count{position:absolute;top:-6px;right:-6px;background:#ff3b30;color:#fff;border-radius:50%;font-size:12px;padding:3px 7px;}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;padding:14px;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;padding:14px;}
     .card{background:#fff;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);overflow:hidden;transition:transform 0.2s;}
     .card:hover{transform:scale(1.02);}
-    .card img{width:100%;height:170px;object-fit:cover;}
-    .card h3{margin:8px;font-size:15px;}
+    .card img{width:100%;height:180px;object-fit:cover;}
+    .card h3{margin:8px;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .card p{margin:4px 8px;font-size:13px;color:#555;}
-    .btn{background:#25D366;color:#fff;border:none;border-radius:6px;padding:8px 12px;margin:8px;font-weight:600;cursor:pointer;}
+    .btn{background:#25D366;color:#fff;border:none;border-radius:6px;padding:8px 12px;margin:8px;font-weight:600;cursor:pointer;width:calc(100% - 16px);}
     .btn:hover{background:#1eb85c;}
     .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;}
-    .modal-box{background:#fff;padding:20px;border-radius:10px;width:90%;max-width:400px;}
+    .modal-box{background:#fff;padding:20px;border-radius:10px;width:90%;max-width:400px;max-height:90vh;overflow:auto;}
     .loader{width:50px;height:50px;border:5px solid #ccc;border-top-color:#25D366;border-radius:50%;animation:spin 1s linear infinite;margin:auto;}
     @keyframes spin{to{transform:rotate(360deg);}}
+    @media(max-width:480px){
+      .card img{height:150px;}
+      header h2{font-size:18px;}
+    }
   </style>
 </head>
 <body>
@@ -42,16 +46,17 @@
 
 <script>
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbygSw84ilE06oLMHZRsVD4jxEMvFECccQKl6A80UbkjtNpO_sAwbC_aS1hSjhIghPre/exec";
-let products=[];
-let cart=JSON.parse(localStorage.getItem('yf_cart')||'[]');
+const WHATSAPP_NO = "919978653852";
+let products = [];
+let cart = JSON.parse(localStorage.getItem('yf_cart')||'[]');
 updateCartBadge();
 
-// ==== FETCH ====
+// === FETCH SHEET (JSONP SAFE) ===
 async function fetchSheet(){
   return new Promise((resolve,reject)=>{
     const cb='cb_'+Date.now();
     window[cb]=(d)=>{
-      products=d.data||[];
+      products = (d && d.data)?d.data:[];
       const cats=[...new Set(products.map(p=>p.Categories))].filter(Boolean);
       document.getElementById('categoryFilter').innerHTML='<option value="All">All</option>'+cats.map(c=>`<option>${c}</option>`).join('');
       renderProducts();
@@ -59,14 +64,14 @@ async function fetchSheet(){
       resolve();
     };
     const s=document.createElement('script');
-    s.src=`${SHEET_URL}?callback=${cb}`;
-    s.onerror=()=>reject(new Error('Network error'));
+    s.src=`${SHEET_URL}?callback=${cb}&_=${Date.now()}`;
+    s.onerror=()=>reject(new Error("Network error"));
     document.body.appendChild(s);
   });
 }
 fetchSheet();
 
-// ==== RENDER ====
+// === RENDER PRODUCTS ===
 function renderProducts(){
   const q=document.getElementById('searchBox').value.toLowerCase();
   const cat=document.getElementById('categoryFilter').value;
@@ -92,23 +97,71 @@ function renderProducts(){
       <img src="${mainImg}" alt="${p.Pname}" loading="lazy">
       <h3>${p.Pname}</h3>
       <p>${p.Pdesc||''}</p>
-      <p><b>₹${p.Prate}</b></p>
-      <button class='btn' onclick="viewCollection('${p.Psku}')">👗 View Full Collection</button>
+      <p><b>₹${p.Prate}</b> ${(p.Pgst||'').toLowerCase().includes('inc')?'(Incl. GST)':'(Excl. GST)'}</p>
+      <button class='btn' onclick="viewCollection('${encodeURIComponent(p.Psku)}')">View Full Collection</button>
     `;
     grid.appendChild(div);
   });
 }
 
-// ==== VIEW FULL COLLECTION ====
+// === OPEN COLLECTION PAGE ===
 function viewCollection(pid){
-  window.location.href = 'collection.html?pid=' + encodeURIComponent(pid);
+  window.location.href = `collection.html?pid=${pid}`;
 }
 
-// ==== CART BADGE ====
+document.getElementById('searchBox').oninput=renderProducts;
+document.getElementById('categoryFilter').onchange=renderProducts;
+
+// === CART FUNCTIONS ===
+function addToCart(p){
+  const key=p.Pname+'|'+(p.Psize||'');
+  const ex=cart.find(c=>c.key===key);
+  if(ex) ex.qty+=1;
+  else cart.push({...p,qty:1,key});
+  localStorage.setItem('yf_cart',JSON.stringify(cart));
+  updateCartBadge();
+  toast('✅ Added to cart');
+}
 function updateCartBadge(){
-  document.getElementById('cartCount').innerText = cart.reduce((a,b)=>a+b.qty,0);
+  document.getElementById('cartCount').innerText=cart.reduce((a,b)=>a+b.qty,0);
 }
-</script>
+function toast(msg){
+  const t=document.createElement('div');
+  t.textContent=msg;
+  Object.assign(t.style,{position:'fixed',bottom:'20px',left:'50%',transform:'translateX(-50%)',background:'#25D366',color:'#fff',padding:'10px 16px',borderRadius:'8px',zIndex:9999});
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),1200);
+}
 
+// === CART MODAL ===
+document.getElementById('cartBtn').onclick=()=>showCart();
+function showCart(){
+  const modal=document.createElement('div');
+  modal.className='modal';
+  modal.innerHTML=`
+  <div class='modal-box'>
+    <h3>Your Cart</h3>
+    ${cart.length===0?'<p>Cart is empty</p>':
+      cart.map((c,i)=>`
+        <div style='display:flex;align-items:center;margin:6px 0;border-bottom:1px solid #eee;padding:6px 0;'>
+          <img src='${(c.Pimage||'').split(',')[0]}' style='width:50px;height:50px;object-fit:cover;border-radius:6px;margin-right:8px;'>
+          <div style='flex:1;'>
+            <b>${c.Pname}</b><br>
+            ${c.Psize?`Size: ${c.Psize}<br>`:''}
+            ₹${c.Prate} × ${c.qty}<br>
+            <small>${(c.Pgst||'').toLowerCase().includes('inc')?'GST Incl.':'GST Extra'}</small>
+          </div>
+          <button class='btn' style='padding:4px 8px;' onclick='removeFromCart(${i})'>❌</button>
+        </div>`).join('')}
+    ${cart.length?`<div style='text-align:right;font-weight:700;margin:10px 0;'>Total: ₹${cart.reduce((s,i)=>s+(+i.Prate*i.qty),0)}</div>
+    <button class='btn' onclick='checkout()'>Checkout</button>`:''}
+    <button class='btn' onclick='closeModal()'>Close</button>
+  </div>`;
+  document.getElementById('modalRoot').innerHTML='';
+  document.getElementById('modalRoot').appendChild(modal);
+}
+function closeModal(){document.getElementById('modalRoot').innerHTML='';}
+function removeFromCart(i){cart.splice(i,1);localStorage.setItem('yf_cart',JSON.stringify(cart));updateCartBadge();showCart();}
+</script>
 </body>
 </html>
