@@ -2,143 +2,128 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Yes Fashion Hub - Collection</title>
+  <title>Yes Fashion Hub – Collection</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
-    body{font-family:'Inter',sans-serif;margin:0;background:#fafafa;color:#222;}
-    header{background:#25D366;color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;}
-    .btn{background:#25D366;color:#fff;border:none;border-radius:6px;padding:8px 12px;font-weight:600;cursor:pointer;}
+    body{font-family:'Inter',sans-serif;margin:0;background:#f9f9f9;color:#222;}
+    header{background:#25D366;color:#fff;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;}
+    .cart-btn{background:#128C7E;border:none;border-radius:50%;width:44px;height:44px;font-size:22px;color:#fff;cursor:pointer;position:relative;}
+    .cart-count{position:absolute;top:-6px;right:-6px;background:#ff3b30;color:#fff;border-radius:50%;font-size:12px;padding:3px 6px;}
+    .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:14px;}
+    .card{background:#fff;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.1);padding:10px;text-align:center;}
+    .card img{width:100%;height:160px;object-fit:cover;border-radius:6px;}
+    .btn{background:#25D366;color:#fff;border:none;border-radius:6px;padding:6px 10px;font-weight:600;cursor:pointer;margin-top:6px;}
     .btn:hover{background:#1eb85c;}
-    .cart-btn{background:#128C7E;border:none;border-radius:50%;width:46px;height:46px;font-size:22px;color:#fff;cursor:pointer;position:relative;}
-    .cart-count{position:absolute;top:-6px;right:-6px;background:#ff3b30;color:#fff;border-radius:50%;font-size:12px;padding:3px 7px;}
-    .title{padding:12px;text-align:center;font-weight:600;}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;padding:14px;}
-    .card{background:#fff;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);overflow:hidden;transition:transform .2s;}
-    .card:hover{transform:scale(1.02);}
-    .card img{width:100%;height:180px;object-fit:cover;}
-    .card select{width:100%;padding:6px;border-radius:6px;border:1px solid #ccc;margin-top:6px;}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:9999;}
+    .modal-box{background:#fff;padding:16px;border-radius:10px;width:90%;max-width:400px;max-height:80vh;overflow-y:auto;}
   </style>
 </head>
 <body>
 
 <header>
-  <button onclick="window.location='index.html'" class="btn">🏠 Home</button>
-  <h2 style="margin:0;font-size:18px;">👗 Collection</h2>
-  <button id="cartBtn" class="cart-btn">🛒<span id="cartCount" class="cart-count">0</span></button>
+  <button onclick="window.history.back()" class="btn" style="background:#fff;color:#25D366;">⬅ Back</button>
+  <h3>Collection</h3>
+  <button id="cartBtn" class="cart-btn">🛍️<span id="cartCount" class="cart-count">0</span></button>
 </header>
 
-<div id="productTitle" class="title"></div>
-<div id="collectionGrid" class="grid"></div>
+<div id="gallery" class="gallery"></div>
 <div id="modalRoot"></div>
 
 <script>
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbygSw84ilE06oLMHZRsVD4jxEMvFECccQKl6A80UbkjtNpO_sAwbC_aS1hSjhIghPre/exec"; 
-let allProducts = [];
-let cart = JSON.parse(localStorage.getItem('yf_cart')||'[]');
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbygSw84ilE06oLMHZRsVD4jxEMvFECccQKl6A80UbkjtNpO_sAwbC_aS1hSjhIghPre/exec";
+let products=[], cart=JSON.parse(localStorage.getItem('yf_cart')||'[]');
 updateCartBadge();
 
-// ==== Fetch Sheet ====
-async function fetchSheet(){
-  return new Promise((resolve,reject)=>{
-    const cb='cb_'+Date.now();
-    window[cb]=(d)=>{
-      allProducts = d.data || [];
-      renderCollection();
-      delete window[cb];
-      resolve();
-    };
-    const s=document.createElement('script');
-    s.src=`${SHEET_URL}?callback=${cb}&_=${Date.now()}`;
-    s.onerror=()=>reject(new Error("Network error"));
-    document.body.appendChild(s);
-  });
+// ====== GET PID FROM URL ======
+const pid = new URLSearchParams(window.location.search).get('pid');
+if(!pid){document.getElementById('gallery').innerHTML='<p style="padding:20px;text-align:center;">No product ID.</p>';}
+
+// ====== FETCH SHEET (JSONP) ======
+(async function(){
+  const cb='cb_'+Date.now();
+  window[cb]=(d)=>{
+    products=d.data||[];
+    showCollection();
+    delete window[cb];
+  };
+  const s=document.createElement('script');
+  s.src=`${SHEET_URL}?callback=${cb}`;
+  document.body.appendChild(s);
+})();
+
+// ====== SHOW COLLECTION ======
+function showCollection(){
+  const prod=products.find(p=>p.Psku==pid);
+  if(!prod){document.getElementById('gallery').innerHTML='<p style="padding:20px;text-align:center;">Product not found</p>';return;}
+
+  const gallery=document.getElementById('gallery');
+  const imgs=(prod.Pimage||'').split(/[,]+/).filter(Boolean);
+  const sizes=(prod.Psize||'').split(/[,]+/).filter(Boolean);
+
+  gallery.innerHTML=imgs.map(img=>`
+    <div class='card'>
+      <img src="${img}" alt="${prod.Pname}" loading="lazy">
+      <h4>${prod.Pname}</h4>
+      <p>₹${prod.Prate}</p>
+      ${sizes.length?`<select id="size_${btoa(img)}" style="padding:6px;border-radius:6px;border:1px solid #ccc;margin:4px 0;">${sizes.map(s=>`<option>${s}</option>`).join('')}</select>`:''}
+      <button class='btn' onclick="addToCart('${img.replace(/'/g,'')}','${prod.Psku}','${prod.Pname}','${prod.Prate}')">Add to Cart</button>
+    </div>
+  `).join('');
 }
 
-// ==== Render Product Collection ====
-function renderCollection(){
-  const pid = new URLSearchParams(window.location.search).get('pid');
-  const product = allProducts.find(p=>String(p.Psku)===pid);
-  if(!product){
-    document.getElementById('collectionGrid').innerHTML="<p style='text-align:center;margin-top:50px;'>Product not found.</p>";
-    return;
-  }
-
-  document.getElementById('productTitle').innerText = `${product.Pname} — ₹${product.Prate}`;
-
-  const imgs=(product.Pimage||'').split(/[,]+/).filter(Boolean);
-  const sizes=(product.Psize||'').split(/[,]+/).filter(Boolean);
-  const grid=document.getElementById('collectionGrid');
-  grid.innerHTML='';
-
-  imgs.forEach((img,i)=>{
-    const div=document.createElement('div');
-    div.className='card';
-    const safe = encodeURIComponent(JSON.stringify(product)); // ✅ safely store product JSON
-    div.innerHTML=`
-      <img src="${img}" alt="Design ${i+1}" loading="lazy">
-      <div style="padding:8px;">
-        ${sizes.length?`<select id="size_${i}">${sizes.map(s=>`<option>${s}</option>`).join('')}</select>`:''}
-        <button class="btn" style="margin-top:6px;width:100%;" onclick="addToCartFromEncoded('${safe}', ${i})">Add to Cart</button>
-      </div>
-    `;
-    grid.appendChild(div);
-  });
-}
-
-// ==== Safe Decode + Add to Cart ====
-function addToCartFromEncoded(encoded, i){
-  const p = JSON.parse(decodeURIComponent(encoded));
-  const sizeSel=document.getElementById('size_'+i);
-  const size=sizeSel?sizeSel.value:'';
-  const key=p.Pname+'|'+size;
+// ====== ADD TO CART ======
+function addToCart(img,sku,name,rate){
+  const sel=document.getElementById('size_'+btoa(img));
+  const size=sel?sel.value:'';
+  const key = sku + '|' + size + '|' + img;  // unique per size + image
   const ex=cart.find(c=>c.key===key);
-  if(ex)ex.qty+=1;else cart.push({...p,qty:1,key,Psize:size});
+  if(ex) ex.qty+=1;
+  else cart.push({Psku:sku,Pname:name,Pimage:img,Prate:rate,Psize:size,qty:1,key});
   localStorage.setItem('yf_cart',JSON.stringify(cart));
   updateCartBadge();
-  toast('✅ Added to cart');
+  toast('🛍️ Added!');
 }
 
-// ==== Cart System ====
+// ====== UPDATE CART BADGE ======
 function updateCartBadge(){
-  document.getElementById('cartCount').innerText=cart.reduce((a,b)=>a+b.qty,0);
+  document.getElementById('cartCount').innerText = cart.reduce((a,b)=>a+b.qty,0);
 }
-function toast(msg){
-  const t=document.createElement('div');
-  t.textContent=msg;
-  Object.assign(t.style,{position:'fixed',bottom:'20px',left:'50%',transform:'translateX(-50%)',background:'#25D366',color:'#fff',padding:'10px 16px',borderRadius:'8px',zIndex:9999});
-  document.body.appendChild(t);
-  setTimeout(()=>t.remove(),1200);
-}
+
+// ====== SHOW CART MODAL ======
 document.getElementById('cartBtn').onclick=()=>showCart();
 
 function showCart(){
   const modal=document.createElement('div');
   modal.className='modal';
   modal.innerHTML=`
-  <div class='modal-box' style="background:#fff;padding:20px;border-radius:10px;max-width:400px;width:90%;">
+  <div class='modal-box'>
     <h3>Your Cart</h3>
     ${cart.length===0?'<p>Cart is empty</p>':
       cart.map((c,i)=>`
         <div style='display:flex;align-items:center;margin:6px 0;border-bottom:1px solid #eee;padding:6px 0;'>
-          <img src='${(c.Pimage||'').split(',')[0]}' style='width:50px;height:50px;object-fit:cover;border-radius:6px;margin-right:8px;'>
+          <img src='${c.Pimage}' style='width:50px;height:50px;object-fit:cover;border-radius:6px;margin-right:8px;'>
           <div style='flex:1;'>
             <b>${c.Pname}</b><br>${c.Psize?`Size: ${c.Psize}<br>`:''}₹${c.Prate} × ${c.qty}
           </div>
           <button class='btn' style='padding:4px 8px;' onclick='removeFromCart(${i})'>❌</button>
         </div>`).join('')}
-    ${cart.length?`<div style='text-align:right;font-weight:700;margin:10px 0;'>Total: ₹${cart.reduce((s,i)=>s+(+i.Prate*i.qty),0)}</div>
-    <button class='btn' onclick='window.location="index.html"'>Checkout</button>`:''}
+    ${cart.length?`<div style='text-align:right;font-weight:700;margin:10px 0;'>Total: ₹${cart.reduce((s,i)=>s+(+i.Prate*i.qty),0)}</div>`:''}
     <button class='btn' onclick='closeModal()'>Close</button>
   </div>`;
   document.getElementById('modalRoot').innerHTML='';
   document.getElementById('modalRoot').appendChild(modal);
 }
-
 function closeModal(){document.getElementById('modalRoot').innerHTML='';}
 function removeFromCart(i){cart.splice(i,1);localStorage.setItem('yf_cart',JSON.stringify(cart));updateCartBadge();showCart();}
 
-// ==== Start ====
-fetchSheet();
+// ====== TOAST ======
+function toast(msg){
+  const t=document.createElement('div');
+  t.textContent=msg;
+  Object.assign(t.style,{position:'fixed',bottom:'20px',left:'50%',transform:'translateX(-50%)',background:'#25D366',color:'#fff',padding:'8px 14px',borderRadius:'8px',zIndex:9999});
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),1200);
+}
 </script>
 </body>
 </html>
