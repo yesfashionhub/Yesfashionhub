@@ -137,7 +137,6 @@ function showCart(){
   document.getElementById('modalRoot').innerHTML='';
   document.getElementById('modalRoot').appendChild(modal);
 }
-
 function closeModal(){document.getElementById('modalRoot').innerHTML='';}
 function removeFromCart(i){cart.splice(i,1);localStorage.setItem('yf_cart',JSON.stringify(cart));updateCartBadge();showCart();}
 
