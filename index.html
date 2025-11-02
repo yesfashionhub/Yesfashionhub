@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html>
 <head>
@@ -18,11 +17,8 @@
     .card p{margin:4px 8px;font-size:13px;color:#555;}
     .btn{background:#25D366;color:#fff;border:none;border-radius:6px;padding:8px 12px;margin:8px;font-weight:600;cursor:pointer;}
     .btn:hover{background:#1eb85c;}
-    .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:1000;}
-    .modal-box{background:#fff;padding:20px;border-radius:10px;width:90%;max-width:500px;max-height:90vh;overflow:auto;}
-    .thumbs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
-    .thumbs img{width:70px;height:70px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid transparent;}
-    .thumbs img:hover{border-color:#25D366;}
+    .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;}
+    .modal-box{background:#fff;padding:20px;border-radius:10px;width:90%;max-width:400px;}
     .loader{width:50px;height:50px;border:5px solid #ccc;border-top-color:#25D366;border-radius:50%;animation:spin 1s linear infinite;margin:auto;}
     @keyframes spin{to{transform:rotate(360deg);}}
   </style>
@@ -44,100 +40,75 @@
 <div id="productGrid" class="grid"></div>
 <div id="modalRoot"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbygSw84ilE06oLMHZRsVD4jxEMvFECccQKl6A80UbkjtNpO_sAwbC_aS1hSjhIghPre/exec";  // 🔹 replace with your deployed Apps Script exec URL
-const DRIVE_UPLOAD_URL = "https://script.google.com/macros/s/AKfycbygSw84ilE06oLMHZRsVD4jxEMvFECccQKl6A80UbkjtNpO_sAwbC_aS1hSjhIghPre/exec";
-const WHATSAPP_NO = "919978653852"; // your WhatsApp number (no +)
-
-let products = [];
-let cart = JSON.parse(localStorage.getItem('yf_cart')||'[]');
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbygSw84ilE06oLMHZRsVD4jxEMvFECccQKl6A80UbkjtNpO_sAwbC_aS1hSjhIghPre/exec";
+let products=[];
+let cart=JSON.parse(localStorage.getItem('yf_cart')||'[]');
 updateCartBadge();
 
-// ==== FETCH SHEET (JSONP) ====
+// ==== FETCH ====
 async function fetchSheet(){
   return new Promise((resolve,reject)=>{
     const cb='cb_'+Date.now();
     window[cb]=(d)=>{
-      products = d.data || [];
+      products=d.data||[];
       const cats=[...new Set(products.map(p=>p.Categories))].filter(Boolean);
-      $('categoryFilter').innerHTML='<option value="All">All</option>'+cats.map(c=>`<option>${c}</option>`).join('');
+      document.getElementById('categoryFilter').innerHTML='<option value="All">All</option>'+cats.map(c=>`<option>${c}</option>`).join('');
       renderProducts();
-      delete window[cb]; resolve();
+      delete window[cb];
+      resolve();
     };
     const s=document.createElement('script');
     s.src=`${SHEET_URL}?callback=${cb}`;
-    s.onerror=()=>reject(new Error("Network error"));
+    s.onerror=()=>reject(new Error('Network error'));
     document.body.appendChild(s);
   });
 }
 fetchSheet();
 
-// ==== RENDER PRODUCTS ====
+// ==== RENDER ====
 function renderProducts(){
-  const q=$('searchBox').value.toLowerCase();
-  const cat=$('categoryFilter').value;
-  const grid=$('productGrid'); grid.innerHTML='';
+  const q=document.getElementById('searchBox').value.toLowerCase();
+  const cat=document.getElementById('categoryFilter').value;
+  const grid=document.getElementById('productGrid');
+  grid.innerHTML='';
   const filtered=products.filter(p=>{
     const mq=!q||(p.Pname||'').toLowerCase().includes(q);
     const mc=(cat==='All')||p.Categories===cat;
     return mq&&mc;
   });
+
+  if(filtered.length===0){
+    grid.innerHTML="<p style='text-align:center;width:100%;color:#999;'>No products found.</p>";
+    return;
+  }
+
   filtered.forEach(p=>{
-    const imgs=(p.Pimage||'').split(/[,]+/).filter(Boolean);
     const div=document.createElement('div');
     div.className='card';
+    const imgs=(p.Pimage||'').split(/[,]+/).filter(Boolean);
+    const mainImg=imgs[0]||'';
     div.innerHTML=`
-      <img src="${imgs[0]||''}" alt="${p.Pname}">
+      <img src="${mainImg}" alt="${p.Pname}" loading="lazy">
       <h3>${p.Pname}</h3>
       <p>${p.Pdesc||''}</p>
- <button class='btn' onclick='viewCollection("${p.Psku}")'>👗 View Collection</button>
-   grid.appendChild(div);
+      <p><b>₹${p.Prate}</b></p>
+      <button class='btn' onclick="viewCollection('${p.Psku}')">👗 View Full Collection</button>
+    `;
+    grid.appendChild(div);
   });
 }
-$('searchBox').oninput=renderProducts;
-$('categoryFilter').onchange=renderProducts;
 
 // ==== VIEW FULL COLLECTION ====
-function viewCollection(p){
-  const imgs=(p.Pimage||'').split(/[,]+/).filter(Boolean);
-  const sizes=(p.Psize||'').split(/[,]+/).filter(Boolean);
-  const modal=document.createElement('div');
-  modal.className='modal';
-  modal.innerHTML='
-    <div class='modal-box'>
-      <img id='mainImg' src='${imgs[0]||''}' style='width:100%;height:300px;object-fit:cover;border-radius:8px;'>
-      <div class='thumbs'>${imgs.map(u=>`<img src='${u}' onclick='document.getElementById("mainImg").src="${u}"'>`).join('')}</div>
-      <h3>${p.Pname}</h3>
-      <p>${p.Pdesc||''}</p>
-      <p><b>₹${p.Prate}</b> ${(p.Pgst||'').toLowerCase().includes('inc')?'(Incl. GST)':'(Excl. GST)'}</p>
-      ${sizes.length?`<select id="sizeSel" style="width:100%;padding:8px;margin:8px 0;">${sizes.map(s=>`<option>${s}</option>`).join('')}</select>`:''}
-      <button class='btn' onclick='addToCart({...${JSON.stringify(p)}, Psize: document.getElementById("sizeSel")?.value || ""})'>Add to Cart</button>
-      <button class='btn' onclick='closeModal()'>Close</button>
-    </div>';
-  $('modalRoot').innerHTML=''; $('modalRoot').appendChild(modal);
+function viewCollection(pid){
+  window.location.href = 'collection.html?pid=' + encodeURIComponent(pid);
 }
 
-// ==== BASIC CART + HELPERS ====
-function addToCart(p){
-  const key=p.Pname+'|'+p.Psize;
-  const ex=cart.find(c=>c.key===key);
-  if(ex)ex.qty+=1;else cart.push({...p,qty:1,key});
-  localStorage.setItem('yf_cart',JSON.stringify(cart));
-  updateCartBadge(); toast('Added to cart');
-}
-function updateCartBadge(){ $('cartCount').innerText=cart.reduce((a,b)=>a+b.qty,0); }
-function closeModal(){ $('modalRoot').innerHTML=''; }
-function toast(msg){
-  const t=document.createElement('div');
-  t.textContent=msg;
-  Object.assign(t.style,{position:'fixed',bottom:'20px',left:'50%',transform:'translateX(-50%)',background:'#25D366',color:'#fff',padding:'10px 16px',borderRadius:'8px',zIndex:9999});
-  document.body.appendChild(t); setTimeout(()=>t.remove(),1200);
-}
-function $(id){return document.getElementById(id);}
-  function viewCollection(pid){
-  window.location.href = `collection.html?pid=${encodeURIComponent(pid)}`;
+// ==== CART BADGE ====
+function updateCartBadge(){
+  document.getElementById('cartCount').innerText = cart.reduce((a,b)=>a+b.qty,0);
 }
 </script>
+
 </body>
 </html>
